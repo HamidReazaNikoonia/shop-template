@@ -1,0 +1,74 @@
+const httpStatus = require('http-status');
+
+// const ApiError = require('../utils/ApiError');
+const catchAsync = require('../../../utils/catchAsync');
+const productService = require('./product.service');
+const ApiError = require('../../../utils/ApiError');
+
+
+/** **************************  Admin ***************************************** */
+const getAllProductsForAdmin = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+  const result = await productService.getAllProductForAdmin({ query: req.query });
+  res.status(httpStatus.OK).send(result);
+});
+
+const createProduct = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+  const newProduct = await productService.createProduct({ product: req.body});
+  res.status(httpStatus.CREATED).send(newProduct);
+});
+
+const updateProduct = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+  const { productId } = req.params;
+  const updatedProduct = await productService.updateProduct({ productId, productData: req.body });
+  res.status(httpStatus.OK).send(updatedProduct);
+});
+
+
+const deleteProduct = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+  const { productId } = req.params;
+  await productService.deleteProduct({ productId });
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
+/** **************************************************************************************** */
+
+
+
+/** **************************  Public  ***************************************** */
+const getAllProducts = catchAsync(async (req, res) => {
+  const result = await productService.getAllProduct({ query: req.query });
+  res.status(httpStatus.OK).send(result);
+});
+
+const getProductBySlug = catchAsync(async (req, res) => {
+  const { productId, slug } = req.params;
+  const product = await productService.getProductBySlug({ productId, slug });
+  res.status(httpStatus.OK).send(product);
+});
+
+
+
+module.exports = {
+  getAllProducts,
+  getAllProductsForAdmin,
+  getProductBySlug,
+  createProduct,
+  deleteProduct,
+  updateProduct,
+};
