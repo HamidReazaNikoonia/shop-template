@@ -13,6 +13,7 @@ const {
   publicRouter: productPublicRoute,
 } = require('../../domain/shop/Product/product.route');
 
+const cartRouter = require('../../domain/shop/Cart/cart.route');
 
 const {orderRoute, orderRouteForAdmin} = require("../../domain/shop/Order/order.route");
 
@@ -49,6 +50,10 @@ const defaultRoutes = [
   {
     path: '/order',
     route: orderRoute,
+  },
+  {
+    path: '/cart',
+    route: cartRouter
   },
   {
     path: '/admin/order',

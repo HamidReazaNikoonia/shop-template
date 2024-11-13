@@ -63,6 +63,20 @@ const getProductBySlug = async ({ productId, user }) => {
   return { data: product };
 };
 
+const getProductById = async ({ productId }) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Product ID');
+  }
+
+  const product = await Product.findById({ _id: productId });
+
+  if (!product) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product Not Found');
+  }
+
+  return product;
+};
+
 /**
  ******************************
  * ** Create Product Service **
@@ -233,4 +247,5 @@ module.exports = {
   createProduct,
   deleteProduct,
   updateProduct,
+  getProductById
 };
