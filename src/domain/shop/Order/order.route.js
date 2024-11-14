@@ -11,7 +11,10 @@ const {
   deleteOrder,
   getAllUserOrders,
   getUserOrderById,
-  checkoutOrder
+  checkoutOrder,
+  getAllUserAddress,
+  createAddressByUser,
+  updateUserAddress
 } = require('./order.controller');
 const { createOrder: createOrderValidation } = require('./order.validation');
 
@@ -34,7 +37,12 @@ orderRouteForAdmin
 
 /** **************************  Authenticate User Route  ***************************************** */
 
-orderRoute.route('/').get(auth(), getAllUserOrders).post(auth(), createOrder);
+orderRoute.route('/').get(auth(), getAllUserOrders).post(auth(), createOrderByUser);
+
+
+//Address Routes
+orderRoute.route('/shipping_address').get(auth(), getAllUserAddress).post(auth(), createAddressByUser);
+orderRoute.route('/shipping_address/:shippingAddressId').put(auth(), updateUserAddress);
 
 orderRoute.route('/:orderId').get(auth(), getUserOrderById); // Retrieve a specific order by ID
 

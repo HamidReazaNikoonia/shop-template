@@ -1,6 +1,11 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../../../utils/catchAsync');
+
+// services
 const orderService = require('./order.service');
+const addressService = require('./address.service');
+
+// utils
 const ApiError = require('../../../utils/ApiError');
 
 /**
@@ -49,7 +54,6 @@ const getAllUserOrders = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(result);
 });
 
-
 /**
  * Asynchronous controller function to retrieve a specific order for Admni by its unique ID.
  * Wrapped with `catchAsync` to handle any potential errors in asynchronous calls.
@@ -87,7 +91,6 @@ const getUserOrderById = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(order);
 });
 
-
 /**
  * Asynchronous controller function to create a new order for the authenticated user.
  * Wrapped with `catchAsync` to handle any potential errors in asynchronous calls.
@@ -111,6 +114,34 @@ const createOrder = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send(newOrder);
 });
 
+/**
+ * Asynchronous controller function to create a new order for the authenticated user.
+ * Wrapped with `catchAsync` to handle any potential errors in asynchronous calls.
+ *
+ * @param {Object} req - Express request object containing:
+ *   @property {Object} user - The authenticated user information.
+ *   @property {Object} body - Request body data, expected to contain the order details.
+ *
+ * @param {Object} res - Express response object used to send responses back to the client.
+ *
+ * @throws {ApiError} - Throws a 404 error if the user does not exist in the request object.
+ *
+ * @returns {void} - Sends a response with the newly created order data.
+ */
+const createOrderByUser = catchAsync(async (req, res) => {
+  const { cartId, shippingAddress } = req.body;
+
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  } else if (!cartId) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Cart Not Defined In Request Body');
+  } else if (!shippingAddress) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'shippingAddress Not Defined In Request Body');
+  }
+
+  const newOrder = await orderService.createOrderByUser({ cartId, user: req.user, shippingAddress });
+  res.status(httpStatus.CREATED).send(newOrder);
+});
 
 /**
  * *** Admin ***
@@ -149,7 +180,6 @@ const deleteOrder = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
-
 /**
  * *** Authenticated User ***
  * Asynchronous controller function to checkout order by its unique ID.
@@ -175,10 +205,30 @@ const createAddressByUser = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
   }
 
-  const newAddress = await orderService.createNewAddressByMerchant({ customerId: req.user?.id, newAddress: req.body});
+  const newAddress = await addressService.createNewAddressByUser({ customerId: req.user?.id, newAddress: req.body });
   res.status(httpStatus.OK).send(newAddress);
-})
+});
 
+const getAllUserAddress = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+  const newAddress = await addressService.getAllUserAddress({ customerId: req.user?.id });
+  res.status(httpStatus.OK).send(newAddress);
+});
+
+const updateUserAddress = catchAsync(async (req, res) => {
+  const { shippingAddressId } = req.params;
+  const updatedAddress = req.body;
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+
+  const newAddress = await addressService.updateUserAddress({ customerId: req.user?.id, shippingAddressId, updatedAddress });
+  res.status(httpStatus.OK).send(newAddress);
+});
 
 module.exports = {
   getAllOrders,
@@ -188,6 +238,10 @@ module.exports = {
   createOrder,
   updateOrder,
   deleteOrder,
+  createOrderByUser,
+  checkoutOrder,
+  // address
   createAddressByUser,
-  checkoutOrder
+  getAllUserAddress,
+  updateUserAddress,
 };

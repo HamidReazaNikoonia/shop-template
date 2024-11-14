@@ -7,6 +7,7 @@ const { omit } = require('lodash');
 const { Order } = require('./order.model');
 const { Product } = require('../Product/product.model');
 const { Address } = require('./order.model');
+const cartModel = require('./../Cart/cart.model');
 
 // Utils
 const ApiError = require('../../../utils/ApiError');
@@ -67,7 +68,7 @@ const getAllOrders = async ({ query }) => {
 
   const features = new APIFeatures(Order.find(), Order, query).filter().sort().limitFields().paginate();
   const orders = await features.query;
-  const {total} = await features.count();
+  const { total } = await features.count();
   console.log('---total mother fucker -----');
   console.log(total);
   return { data: orders, total };
@@ -77,12 +78,12 @@ const getAllUsersOrders = async ({ user, query }) => {
   console.log(query);
   console.log('-------query------------');
 
-  const features = new APIFeatures(Order.find({customer: user.id}), Order, query).filter().sort().limitFields().paginate();
+  const features = new APIFeatures(Order.find({ customer: user.id }), Order, query).filter().sort().limitFields().paginate();
   const orders = await features.query;
   const { total } = await features.count();
   console.log('---total mother fucker -----');
   console.log(total);
-  return { data: orders,  total: total };
+  return { data: orders, total: total };
 };
 
 const getOrderById = async ({ orderId }) => {
@@ -98,13 +99,12 @@ const getOrderById = async ({ orderId }) => {
   return { data: order };
 };
 
-
 const getUserOrderById = async ({ orderId, user }) => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Order ID');
   }
 
-  const order = await Order.find({_id: orderId, customer: user.id});
+  const order = await Order.find({ _id: orderId, customer: user.id });
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Order Not Found');
   }
@@ -125,7 +125,6 @@ const createOrder = async ({ orderData, user }) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Product not Exist in the Order');
   }
 
-
   let customer = user.id;
   let address = null;
 
@@ -134,9 +133,6 @@ const createOrder = async ({ orderData, user }) => {
     paymentMethod: orderData.paymentMethod,
     // ...(orderData.billingAddress && { billingAddress: orderData.billingAddress }),
   };
-
-
-
 
   // Generate Address
   // If address Exist in the body from user but it not saved in DB
@@ -193,17 +189,91 @@ const createOrder = async ({ orderData, user }) => {
   return { data: newOrder };
 };
 
+const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
+  if (!mongoose.Types.ObjectId.isValid(cartId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Cart ID');
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(shippingAddress)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid shippingAddress ID');
+  }
+  // Get Cart By Id
+  const cart = await cartModel.findById(cartId);
+
+  // validate Cart
+  if (!cart) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Order Not Exist In Database');
+  }
+
+  // if cart empty
+  if (!cart.cartItem || cart.cartItem.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Cart Have Not Any Product');
+  }
+
+
+  // check shiping Address
+  const isSelectedAddressValid = await Address.findById(shippingAddress);
+
+  if (!isSelectedAddressValid) {
+    throw new ApiError(httpStatus.NOT_MODIFIED, 'Address Not Exist In DB');
+  }
+
+
+  // Generate Ref
+  const orderIdGenerator = OrderId();
+  const randomRef = Math.floor(Math.random() * 1000);
+  const refrenceId = `${orderIdGenerator.generate()}-${randomRef}`;
+
+  // map over cart.cartItem
+  const productsItems = cart.cartItem.map((item) => {
+    return {
+      product: item.productId,
+      quantity: item.quantity,
+      price: item.price,
+    };
+  });
+
+  // Implement Products
+  const validProducts = await validateProducts(productsItems);
+
+  if (!Array.isArray(validProducts)) {
+    throw new ApiError(httpStatus.BAD_GATEWAY, 'System Could Not Retrive Product');
+  }
+
+  // Calculate Total Price
+  const tprice = calculateTotalPrice(validProducts);
+  const TAX_CONSTANT = 100;
+
+  const newOrder = await Order.create({
+    customer: user.id,
+    products: validProducts,
+    shippingAddress: shippingAddress,
+    paymentMethod: 'zarinpal',
+    reference: refrenceId,
+    total: tprice,
+    totalAmount: tprice + TAX_CONSTANT,
+  });
+
+  if (!newOrder) {
+    throw new ApiError(httpStatus.EXPECTATION_FAILED, 'Order Could Not Save In DB');
+  }
+
+  // Delete Cart
+  await cartModel.findByIdAndDelete(cart._id);
+
+  return newOrder;
+};
+
 const updateOrder = async ({ orderId, orderData }) => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Order ID');
   }
 
   const data = {
-    ...(orderData.status && {status: orderData.status}),
-    ...(orderData.paymentStatus && {paymentStatus: orderData.paymentStatus}),
-    ...(orderData.deliveryFees && {deliveryFees: orderData.deliveryFees}),
-  }
-
+    ...(orderData.status && { status: orderData.status }),
+    ...(orderData.paymentStatus && { paymentStatus: orderData.paymentStatus }),
+    ...(orderData.deliveryFees && { deliveryFees: orderData.deliveryFees }),
+  };
 
   // data from admin will be empty
   if (Object.keys(data).length === 0) {
@@ -223,7 +293,7 @@ const deleteOrder = async ({ orderId }) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Order ID');
   }
 
-  const order = await Order.findByIdAndUpdate(orderId, {soft_delete: true});
+  const order = await Order.findByIdAndUpdate(orderId, { soft_delete: true });
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Order Not Found');
   }
@@ -231,32 +301,29 @@ const deleteOrder = async ({ orderId }) => {
   return true;
 };
 
+// const createAddressByUser = async ({ customerId, newAddress, merchantId }) => {
+//   if (!mongoose.Types.ObjectId.isValid(customerId)) {
+//     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Customer ID');
+//   }
 
-const createAddressByUser = async ({ customerId, newAddress, merchantId }) => {
-  if (!mongoose.Types.ObjectId.isValid(customerId)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Customer ID');
-  }
+//   // const customer = await User.findOne({ id: customerId, merchantId });
 
-  // const customer = await User.findOne({ id: customerId, merchantId });
+//   // if (!customer) {
+//   //   throw new ApiError(httpStatus.NOT_FOUND, 'Customer Could Not Fount');
+//   // }
 
-  // if (!customer) {
-  //   throw new ApiError(httpStatus.NOT_FOUND, 'Customer Could Not Fount');
-  // }
+//   const customerNewAddress = await Address.create(newAddress);
 
-  const customerNewAddress = await Address.create(newAddress);
+//   if (!customerNewAddress) {
+//     throw new ApiError(httpStatus.NOT_MODIFIED, 'Address Could Not Be Save In DB');
+//   }
 
-  if (!customerNewAddress) {
-    throw new ApiError(httpStatus.NOT_MODIFIED, 'Address Could Not Be Save In DB');
-  }
+//   // push new Address
 
-  // push new Address
+//   return { data: customerNewAddress };
+// };
 
-  return { data: customerNewAddress };
-};
-
-
-
-const checkoutOrder = async ({ orderId}) => {
+const checkoutOrder = async ({ orderId }) => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Order ID');
   }
@@ -270,7 +337,6 @@ const checkoutOrder = async ({ orderId}) => {
   // Validate order
   // order.soft_delete === false
   // order should have billingAddress
-
 
   // call checkAndUpdateOrderProductPrices
   // call decrementProductCount
@@ -315,7 +381,6 @@ async function decrementProductCount(productId) {
     throw error;
   }
 }
-
 
 // Service function to check and update product prices in an order
 async function checkAndUpdateOrderProductPrices(orderId) {
@@ -373,7 +438,6 @@ async function checkAndUpdateOrderProductPrices(orderId) {
   }
 }
 
-
 module.exports = {
   getAllOrders,
   getAllUsersOrders,
@@ -383,4 +447,5 @@ module.exports = {
   updateOrder,
   deleteOrder,
   checkoutOrder,
+  createOrderByUser,
 };
