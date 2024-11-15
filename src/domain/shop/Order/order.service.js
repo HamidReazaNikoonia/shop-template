@@ -202,7 +202,7 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
 
   // validate Cart
   if (!cart) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Order Not Exist In Database');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Cart Not Exist In Database');
   }
 
   // if cart empty
