@@ -16,6 +16,11 @@ const TransactionSchema = new mongoose.Schema(
       ref: 'Reference',
       autopopulate: false,
     },
+    order_id: {
+      type: mongoose.Types.ObjectId,
+      ref: 'Order',
+      autopopulate: false,
+    },
     payment_reference_id: String,
     factorNumber: String,
     amount: Number,
@@ -27,6 +32,15 @@ const TransactionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    payment_details: {
+      code: Number,
+      message: String,
+      card_hash: String,
+      card_pan: String,
+      fee_type: String,
+      fee: Number,
+      shaparak_fee: Number
+    }
   },
   {
     timestamps: true,

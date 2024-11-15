@@ -47,6 +47,6 @@ orderRoute.route('/shipping_address/:shippingAddressId').put(auth(), updateUserA
 orderRoute.route('/:orderId').get(auth(), getUserOrderById); // Retrieve a specific order by ID
 
 
-orderRoute.route('/:orderId/checkout').post(auth(), checkoutOrder)
+orderRoute.route('/:orderId/checkout').get(checkoutOrder)
 
 module.exports = { orderRouteForAdmin, orderRoute };

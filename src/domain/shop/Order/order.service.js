@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 const mongoose = require('mongoose');
 const httpStatus = require('http-status');
+const { v4: uuidv4 } = require('uuid');
 const { omit } = require('lodash');
 
 // Models
@@ -8,10 +9,13 @@ const { Order } = require('./order.model');
 const { Product } = require('../Product/product.model');
 const { Address } = require('./order.model');
 const cartModel = require('./../Cart/cart.model');
+const Transaction = require('../../Transaction/transaction.model');
 
 // Utils
 const ApiError = require('../../../utils/ApiError');
 const APIFeatures = require('../../../utils/APIFeatures');
+const ZarinpalCheckout = require('../../../services/payment');
+const config = require('../../../config/config');
 
 const OrderId = require('../../../utils/orderId');
 
@@ -242,7 +246,7 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
 
   // Calculate Total Price
   const tprice = calculateTotalPrice(validProducts);
-  const TAX_CONSTANT = 100;
+  const TAX_CONSTANT = 10000;
 
   const newOrder = await Order.create({
     customer: user.id,
@@ -258,10 +262,47 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     throw new ApiError(httpStatus.EXPECTATION_FAILED, 'Order Could Not Save In DB');
   }
 
+   // *** payment ***
+  // Send Payment Request to Get TOKEN
+  const factorNumber = uuidv4();
+  console.log(config.CLIENT_URL);
+  console.log({tprice: newOrder.totalAmount})
+  console.log('hooo');
+  const zarinpal = ZarinpalCheckout.create('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', true);
+  const payment = await zarinpal.PaymentRequest({
+    Amount: newOrder.totalAmount,
+    CallbackURL: `${config.SERVER_API_URL}/order/${newOrder._id}/checkout`,
+    Description: '---------',
+    Mobile: user.mobile,
+    order_id: factorNumber,
+  });
+
+  // Validate Payment Request
+
+  if (!payment || payment.code !== 100) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Payment Error with status => ${payment.code || null}`);
+  }
+
+  // Create New Transaction
+  const transaction = new Transaction({
+    // coachUserId: 'NOT_SELECTED',
+    userId: user.id,
+    order_id: newOrder._id,
+    amount: newOrder.totalAmount,
+    factorNumber: payment.authority,
+    tax: TAX_CONSTANT
+  });
+
+  const savedTransaction = await transaction.save();
+
+  if (!savedTransaction) {
+    throw new ApiError(httpStatus[500], 'Transaction Could Not Save In DB');
+  }
+
   // Delete Cart
   await cartModel.findByIdAndDelete(cart._id);
 
-  return newOrder;
+  return {newOrder, transaction, payment};
 };
 
 const updateOrder = async ({ orderId, orderData }) => {
@@ -323,34 +364,119 @@ const deleteOrder = async ({ orderId }) => {
 //   return { data: customerNewAddress };
 // };
 
-const checkoutOrder = async ({ orderId }) => {
+const checkoutOrder = async ({ orderId, Authority: authorityCode, Status: paymentStatus }) => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Order ID');
   }
 
+  if (!paymentStatus || !authorityCode) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Query not exist from zarinpal');
+  }
+
+  // get Order by order id
   const order = await Order.findById(orderId);
 
   if (!order) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Customer Could Not Fount');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Order Could Not Fount');
   }
 
+
   // Validate order
-  // order.soft_delete === false
-  // order should have billingAddress
+  if (order.soft_delete) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'This Order Not Found');
+  }
+
+
+  // get Transaction
+  const transaction = await Transaction.findOne({order_id: order._id});
+
+  // Order and Transaction should be same
+  // order.totalprice === trancation.amount
+
+
+  // Verify Payment with Payment gateway (zarinpal)
+  // Verify Payment
+  const zarinpal = ZarinpalCheckout.create('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', true);
+  const payment = await zarinpal.PaymentVerification({
+    amount: transaction.amount,
+    authority: authorityCode,
+  });
+
+  // if (payment?.data?.code !== 100) {
+  //   await createNotificationService(referenceDoc.customer, "payment_fail_create_reference", {
+  //     follow_up_code: referenceDoc.follow_up_code,
+  //     payment_ref: payment?.data?.ref_id || '',
+  //     payment_status: false,
+  //     payment_status_zarinpal: false
+  //   }, ["SMS"])
+  // }
+
+  // Payment Failed
+  if (!payment?.data) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Payment Has Error From Bank');
+  }
+
+  if (payment?.data?.code !== 100) {
+    switch (payment.data.code) {
+      case -55:
+        throw new ApiError(httpStatus.BAD_REQUEST, 'تراکنش مورد نظر یافت نشد');
+        break;
+      case -52:
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          ' خطای غیر منتظره‌ای رخ داده است. پذیرنده مشکل خود را به امور مشتریان زرین‌پال ارجاع دهد.'
+        );
+        break;
+      case -50:
+        throw new ApiError(httpStatus.BAD_REQUEST, 'مبلغ پرداخت شده با مقدار مبلغ ارسالی در متد وریفای متفاوت است.');
+        break;
+      default:
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          `Payment Transaction Faild From ZarinPal with code => ${payment.data.code} `
+        );
+    }
+  }
+
+  if (payment.data.code === 101) {
+    throw new ApiError(httpStatus[201], 'تراکنش وریفای شده است.');
+  }
+
+
+  const payment_details = {
+    code: payment.data.code,
+    message: payment.data.message,
+    card_hash: payment.data.card_hash,
+    card_pan: payment.data.card_pan,
+    fee_type: payment.data.fee_type,
+    fee: payment.data.fee,
+    shaparak_fee: payment.data.shaparak_fee,
+  }
+
+
+  // Transaction Pay Successfully
+  if (payment.data.code === 100 && payment.data.message === 'Paid') {
+    // Update Transaction
+    transaction.status = true;
+    transaction.payment_reference_id = payment.data.ref_id;
+    transaction.payment_details = payment_details;
+    await transaction.save();
+
+    order.status = 'confirmed';
+    order.paymentStatus = 'paid';
+    await order.save();
+  }
+
 
   // call checkAndUpdateOrderProductPrices
   // call decrementProductCount
 
-  const customerNewAddress = await Address.create(newAddress);
 
-  if (!customerNewAddress) {
-    throw new ApiError(httpStatus.NOT_MODIFIED, 'Address Could Not Be Save In DB');
-  }
 
-  // push new Address
-
-  return { data: customerNewAddress };
+  return {order, transaction, payment};
 };
+
+
 // STATIC METHODS
 
 // Function to find a product by ID and decrement the count by 1

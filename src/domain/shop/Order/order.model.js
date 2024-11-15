@@ -15,6 +15,11 @@ const orderSchema = mongoose.Schema(
       ref: 'User',
       autopopulate: true,
     },
+    transactionId: {
+      type: objectId,
+      required: false,
+      ref: 'Transaction',
+    },
     reference: {
       type: String,
       required: true,

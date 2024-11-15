@@ -195,8 +195,9 @@ const deleteOrder = catchAsync(async (req, res) => {
  */
 const checkoutOrder = catchAsync(async (req, res) => {
   const { orderId } = req.params;
-  const { addressId } = req.body;
-  const updatedOrder = await orderService.checkoutOrder({ orderId, addressId });
+  const {Authority, Status} = req.query;
+
+  const updatedOrder = await orderService.checkoutOrder({ orderId, Authority, Status });
   res.status(httpStatus.OK).send(updatedOrder);
 });
 
