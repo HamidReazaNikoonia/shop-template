@@ -34,10 +34,26 @@ const APIFeatures = require('../../../utils/APIFeatures');
 //   };
 
 const getAllProduct = async ({ query }) => {
-  const features = new APIFeatures(Product.find({status: "publish"}), Product, query).filter().sort().limitFields().paginate();
-  const products = await features.query;
+  // const features = new APIFeatures(Product.find({status: "publish"}), Product, query).filter().sort().limitFields().paginate();
+  // const products = await features.query;
 
-  const total = await features.count().total;
+  // const total = await features.count().total;
+  // return { data: { total, count: products.length, products } };
+  const features = new APIFeatures(Product.find({ status: 'publish' }), query)
+    .filter()
+    .search()
+    .priceRange() // Apply the price range filter
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const products = await features.query;
+  const total = await new APIFeatures(Product.find({ status: 'publish' }), query)
+    .filter()
+    .search()
+    .priceRange() // Apply the price range filter
+    .count().total;
+
   return { data: { total, count: products.length, products } };
 };
 
@@ -96,10 +112,14 @@ const createProduct = async ({ product }) => {
     ...(product.tag && { tag: product.tag }),
     ...(product.publish_on_social && { publish_on_social: product.publish_on_social }),
     ...(product.tag && { tag: product.tag }),
-    ...(product.tag && { tag: product.tag }),
 
     ...(product.publish_on_website && { publish_on_website: product.publish_on_website }),
     ...(product.product_details && { product_details: product.product_details }),
+    ...(product.slug && { slug: product.slug }),
+    ...(product.qr_code && { qr_code: product.qr_code }),
+    ...(product.average_rating && { average_rating: product.average_rating }),
+    ...(product.is_available && { is_available: product.is_available }),
+
   };
   // if product is a giftcard, we should disallow discounts
   if (rest.is_giftcard) {
@@ -112,10 +132,16 @@ const createProduct = async ({ product }) => {
     if (!selectedCategory) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Selected Category Not Found!');
     }
+
+    productBody.category = rest.category
   }
 
   // Implement Image
-  if (rest.thumbnail) {
+  // if (rest.thumbnail) {
+  //   productBody.thumbnail = rest.thumbnail;
+  // }
+
+  if (rest.thumbnail && mongoose.Types.ObjectId.isValid(rest.thumbnail)) {
     productBody.thumbnail = rest.thumbnail;
   }
 
@@ -138,6 +164,10 @@ const createProduct = async ({ product }) => {
 
   // discount
   if (rest.discountable) {
+    productBody.discountable = {
+      status: true,
+       percent: rest.discountable.percent
+   }
     if (rest.discountable.status) {
       const currentPrice = Number(productBody.price);
       const discountPercentage = Number(rest.discountable.percent);
@@ -145,6 +175,8 @@ const createProduct = async ({ product }) => {
       productBody.price = FinalAmount;
     }
   }
+
+
 
   // JOBS
 
@@ -179,7 +211,7 @@ const updateProduct = async ({ productId, productData }) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Product ID');
   }
 
-  const { title, subtitle, description, price, countInStock, ...rest } = productData;
+  const { title, subtitle, description, price, countInStock, is_available, ...rest } = productData;
   const productBody = {
     ...(productData.countInStock && { countInStock: productData.countInStock }),
     ...(productData.price && { price: productData.price }),
@@ -191,6 +223,13 @@ const updateProduct = async ({ productId, productData }) => {
     ...(productData.publish_on_social && { publish_on_social: productData.publish_on_social }),
     ...(productData.publish_on_website && { publish_on_website: productData.publish_on_website }),
     ...(productData.product_details && { product_details: productData.product_details }),
+    ...(productData.slug && { slug: productData.slug }),
+    ...(productData.qr_code && { qr_code: productData.qr_code }),
+    ...(productData.average_rating && { average_rating: productData.average_rating }),
+     is_available: is_available,
+
+
+
   };
 
   if (rest.is_giftcard) {
@@ -203,6 +242,8 @@ const updateProduct = async ({ productId, productData }) => {
     if (!selectedCategory) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Selected Category Not Found!');
     }
+
+    productBody.category = rest.category
   }
 
   if (rest.thumbnail && mongoose.Types.ObjectId.isValid(rest.thumbnail)) {
@@ -225,10 +266,19 @@ const updateProduct = async ({ productId, productData }) => {
   }
 
   if (rest.discountable && rest.discountable.status) {
+      productBody.discountable = {
+       status: true,
+        percent: rest.discountable.percent
+    }
     const currentPrice = Number(productBody.price);
     const discountPercentage = Number(rest.discountable.percent);
     const FinalAmount = currentPrice * ((100 - discountPercentage) / 100);
     productBody.price = FinalAmount;
+  } else {
+    productBody.discountable = {
+      status: false,
+      percent: 0
+    }
   }
 
   const updatedProduct = await Product.findOneAndUpdate({ _id: productId }, productBody, { new: true });

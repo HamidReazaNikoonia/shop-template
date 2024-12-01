@@ -90,14 +90,14 @@ const productSchema = mongoose.Schema(
         type: objectId,
         ref: 'Upload',
         required: false,
-        autopopulate: false,
+        autopopulate: true,
       },
     ],
     thumbnail: {
       type: objectId,
       ref: 'Upload',
       required: false,
-      autopopulate: false,
+      autopopulate: true,
     },
     brand: {
       type: String,
@@ -107,6 +107,7 @@ const productSchema = mongoose.Schema(
       type: objectId,
       ref: 'Category',
       required: false,
+      autopopulate: true,
     },
     average_rating: {
       type: Number,

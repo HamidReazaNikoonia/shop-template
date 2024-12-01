@@ -8,10 +8,18 @@ const createProduct = {
     description: Joi.string().min(30).max(900),
     brand: Joi.string(),
     price: Joi.number().required(),
+    slug: Joi.string(),
+    average_rating: Joi.number(),
+    qr_code: Joi.string(),
+    discountable: {
+      status: Joi.boolean(),
+      percent: Joi.number()
+    },
     countInStock: Joi.number(),
     images: Joi.array().items(Joi.string().hex().length(24)),
     thumbnail: Joi.string().hex().length(24),
     category: Joi.string().hex().length(24),
+    is_available: Joi.boolean()
   }),
 };
 
@@ -21,11 +29,19 @@ const updateProduct = {
     subtitle: Joi.string(),
     description: Joi.string().min(30).max(900),
     brand: Joi.string(),
+    slug: Joi.string(),
+    average_rating: Joi.number(),
+    qr_code: Joi.string(),
+    discountable: {
+      status: Joi.boolean(),
+      percent: Joi.number()
+    },
     price: Joi.number(),
     countInStock: Joi.number(),
     images: Joi.array().items(Joi.string().hex().length(24)),
     thumbnail: Joi.string().hex().length(24),
     category: Joi.string().hex().length(24),
+    is_available: Joi.boolean()
   }),
 };
 

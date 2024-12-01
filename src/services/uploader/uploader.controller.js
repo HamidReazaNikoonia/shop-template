@@ -4,7 +4,7 @@ const uploder = require('./index');
 
 const router = express.Router();
 
-router.post('/', uploder.single('jetscanFile'), async (req, res) => {
+router.post('/', uploder.single('file'), async (req, res) => {
   try {
     const { file } = req;
     if (!file) {

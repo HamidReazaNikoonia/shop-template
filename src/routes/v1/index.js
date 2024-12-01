@@ -19,6 +19,7 @@ const {orderRoute, orderRouteForAdmin} = require("../../domain/shop/Order/order.
 
 // Admin Routes
 const timeSlotRoute = require('../../domain/TimeSlot/time_slot.route');
+const uploaderRoute = require('../../services/uploader/uploader.controller');
 
 const router = express.Router();
 
@@ -66,6 +67,10 @@ const defaultRoutes = [
   {
     path: '/admin/time-slot',
     route: timeSlotRoute,
+  },
+  {
+    path: '/admin/setting/upload',
+    route: uploaderRoute
   },
 ];
 
