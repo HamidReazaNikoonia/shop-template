@@ -56,6 +56,22 @@ const getAllProducts = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(result);
 });
 
+const getProductReview = catchAsync(async (req, res) => {
+  const { productId } = req.params;
+  const { page } = req.query;
+
+  const result = await productService.getProductReview({ productId, page });
+  res.status(httpStatus.OK).send(result);
+});
+
+const createProductReview = catchAsync(async (req, res) => {
+  const { productId } = req.params;
+  const { name, text, rating } = req.body;
+
+  const result = await productService.createProductReview({ productId, name, text, rating });
+  res.status(httpStatus.OK).send(result);
+});
+
 const getProductBySlug = catchAsync(async (req, res) => {
   const { productId, slug } = req.params;
   const product = await productService.getProductBySlug({ productId, slug });
@@ -66,6 +82,8 @@ const getProductBySlug = catchAsync(async (req, res) => {
 
 module.exports = {
   getAllProducts,
+  getProductReview,
+  createProductReview,
   getAllProductsForAdmin,
   getProductBySlug,
   createProduct,

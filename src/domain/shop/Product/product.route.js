@@ -29,6 +29,11 @@ publicRouter.route('/collection/:collectionId').get(collectionController.getColl
 publicRouter.route('/categories').get(categoryController.getCategories);
 publicRouter.route('/:productId/:slug').get(productController.getProductBySlug);
 
+publicRouter.route('/:productId/:slug/review')
+  .get(productController.getProductReview)
+  .post(productController.createProductReview);
+
+
 
 
 /** ********************************************************************************** */

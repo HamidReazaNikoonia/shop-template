@@ -8,18 +8,23 @@ const productTypesEnum = ['publish', 'draft', 'rejected'];
 // Review Schema
 const reviewSchema = mongoose.Schema(
   {
+    product: {type: objectId, ref: 'Product'},
     name: { type: String, required: true },
     // Individual rating
     rating: {
       type: Number,
       min: [1, 'Rating must be at least 1'],
-      max: [10, 'Rating must can not be more than 10'],
+      max: [5, 'Rating must can not be more than 5'],
       required: true,
+    },
+    status: {
+      type: Boolean,
+      default: true,
     },
     comment: { type: String, required: true },
     user: {
       type: objectId, // Gets id of User
-      required: true,
+      required: false,
       ref: 'User', // Adds relationship between Review and User
     },
   },
@@ -192,6 +197,7 @@ const ProductReview = mongoose.model('ProductReview', reviewSchema);
 
 module.exports = {
   Product,
+  ProductReview,
   Collection,
   Category,
 };

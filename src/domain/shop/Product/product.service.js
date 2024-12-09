@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 
 // Models
-const { Product, Category } = require('./product.model');
+const { Product, Category, ProductReview } = require('./product.model');
 
 // utils
 const ApiError = require('../../../utils/ApiError');
@@ -78,6 +78,47 @@ const getProductBySlug = async ({ productId, user }) => {
 
   return { data: product };
 };
+
+
+const getProductReview = async ({ productId, page = 1, pageSize = 10 }) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Product ID');
+  }
+
+  const skip = (page - 1) * pageSize;
+
+  const [productReview, totalReviews] = await Promise.all([
+    ProductReview.find({ product: productId, status: true })
+      .skip(skip)
+      .limit(pageSize)
+      .sort({ createdAt: -1 }) // Sort by newest reviews first
+      .lean(), // Convert to plain JavaScript objects
+    ProductReview.countDocuments({ product: productId, status: true }), // Get total number of reviews
+  ]);
+
+  if (!productReview) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Product Review Not Found');
+  }
+
+  return { data: productReview, totalReviews };
+};
+
+
+const createProductReview = async ({productId, name, text, rating = 1}) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Product ID');
+  }
+
+  const newProductReviewModel = await ProductReview.create({ product: productId, name, comment: text, rating});
+
+  if (!newProductReviewModel) {
+    throw new ApiError(httpStatus.EXPECTATION_FAILED, 'Product Could Not Save In DB');
+  }
+
+
+  return {data: newProductReviewModel }
+
+}
 
 const getProductById = async ({ productId }) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
@@ -293,6 +334,8 @@ const updateProduct = async ({ productId, productData }) => {
 module.exports = {
   getAllProduct,
   getAllProductForAdmin,
+  getProductReview,
+  createProductReview,
   getProductBySlug,
   createProduct,
   deleteProduct,
