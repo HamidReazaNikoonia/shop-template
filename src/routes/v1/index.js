@@ -7,6 +7,9 @@ const config = require('../../config/config');
 const referenceRoute = require('../../domain/Reference/reference.route');
 const transactionRoute = require('../../domain/Transaction/transaction.route');
 const consultRoute = require('../../domain/Consult/consult.route');
+const courseRoute = require('../../domain/Course/course.route');
+const coachRoute = require('../../domain/Coach/coach.route');
+
 
 const {
   adminRouter: productAdminRoute,
@@ -55,6 +58,14 @@ const defaultRoutes = [
   {
     path: '/cart',
     route: cartRouter
+  },
+  {
+    path: '/course',
+    route: courseRoute,
+  },
+  {
+    path: '/coach',
+    route: coachRoute,
   },
   {
     path: '/admin/order',

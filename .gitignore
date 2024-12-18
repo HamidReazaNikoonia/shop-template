@@ -22,3 +22,8 @@ yarn-debug.log*
 yarn-error.log*
 /.yarn/*
 /.yarn/install-state.gz
+
+
+
+# Upload Storage
+/storage
