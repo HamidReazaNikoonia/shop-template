@@ -3,7 +3,7 @@ const express = require('express');
 const auth = require('../../../middlewares/auth');
 const validate = require('../../../middlewares/validate');
 
-const { addProductToCartValidation, removeProductFromCart } = require('./cart.validate');
+const { addProductToCartValidation, removeProductFromCart, removeCourseFromCart } = require('./cart.validate');
 
 const cartController = require('./cart.controller.js');
 
@@ -15,8 +15,17 @@ cartRouter
   .get(auth(), cartController.getLoggedUserCart);
 
 
+  // cartRouter
+  // .route('course/:courseId')
+  // // this DELETE route use `productId` params as cart item _id
+  // // productId param ===> cart.cartItem._id
+  // .delete(auth(), validate(removeProductFromCart), cartController.removeCourseFromCart);
+  // // // this PUT route use `productId` as product id
+  // // .put(auth(), cartController.updateProductQuantity);
+
+
 cartRouter
-  .route('/:productId')
+  .route('/:cartItemId')
   // this DELETE route use `productId` params as cart item _id
   // productId param ===> cart.cartItem._id
   .delete(auth(), validate(removeProductFromCart), cartController.removeProductFromCart)

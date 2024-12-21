@@ -9,6 +9,7 @@ const cartSchema = new Schema(
     cartItem: [
       {
         productId: { type: Schema.ObjectId, ref: 'Product', autopopulate: false },
+        courseId: { type: Schema.ObjectId, ref: 'Course', autopopulate: true },
         quantity: {
           type: Number,
           default: 1,
