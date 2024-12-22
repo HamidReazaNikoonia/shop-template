@@ -30,6 +30,37 @@ const calculateTotalPrice = (products) => {
   return totalPrice;
 };
 
+
+const validateCourse = (courses) => {
+  const validCourse = [];
+
+
+  for (const item of courses) {
+
+
+    const {course_member, course_status, max_member_accept, _id: courseId} = item.course;
+
+    // check Status
+    if (!course_status) {
+      throw new ApiError(httpStatus.BAD_REQUEST, `(ERROR::Status_false) This Course Status Is False: ${courseId}`);
+    }
+
+
+    // check member count validation
+    if (Array.isArray(course_member)) {
+      if (course_member.length > max_member_accept) {
+        throw new ApiError(httpStatus.BAD_REQUEST, `(ERROR::max_member_accept) This Course Member Is Full : ${courseId}`);
+      }
+    }
+
+    validCourse.push({course: courseId , quantity: 1, price: item.price });
+  }
+
+  return validCourse;
+
+
+}
+
 const validateProducts = async (products) => {
   const validProducts = [];
 
@@ -229,7 +260,13 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
   const refrenceId = `${orderIdGenerator.generate()}-${randomRef}`;
 
   // map over cart.cartItem
-  const productsItems = cart.cartItem.map((item) => {
+
+  const productsItemsObj = cart.cartItem.filter((i) => !!i.productId);
+  const coursesItemsObj = cart.cartItem.filter((i) => !!i.courseId);
+
+
+  // Map `Product` in the Cart
+  const productsItems = productsItemsObj.map((item) => {
     return {
       product: item.productId,
       quantity: item.quantity,
@@ -237,20 +274,59 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     };
   });
 
-  // Implement Products
-  const validProducts = await validateProducts(productsItems);
 
-  if (!Array.isArray(validProducts)) {
+  // Map Courses in The Cart
+  const coursesItems = coursesItemsObj.map((item) => {
+    return {
+      course: item.courseId,
+      quantity: 1,
+      price: item.price,
+    };
+  });
+
+
+
+
+     // Implement Products and validate product
+    // * Status Should be True and available
+   // * Check Quantity
+
+   let validCourseAndProduct = [];
+
+   if (coursesItems.length > 0) {
+    const validCourse = validateCourse(coursesItems);
+    validCourseAndProduct = [...validCourseAndProduct, ...validCourse];
+    // Object.assign(validCourseAndProduct, validCourse);
+   }
+
+
+  // Implement Products and validate product
+  // * Status Should be True and available
+  // * Check Quantity
+  if (productsItems.length > 0) {
+    const validProducts = await validateProducts(productsItems);
+    // return validProducts;
+    validCourseAndProduct = [...validCourseAndProduct, ...validProducts];
+    // Object.assign(validCourseAndProduct, validProducts);
+
+  }
+
+
+
+  if (!Array.isArray(validCourseAndProduct)) {
     throw new ApiError(httpStatus.BAD_GATEWAY, 'System Could Not Retrive Product');
   }
 
   // Calculate Total Price
-  const tprice = calculateTotalPrice(validProducts);
+  const tprice = calculateTotalPrice(validCourseAndProduct);
   const TAX_CONSTANT = 10000;
+
+
+  // return validCourseAndProduct;
 
   const newOrder = await Order.create({
     customer: user.id,
-    products: validProducts,
+    products: validCourseAndProduct,
     shippingAddress: shippingAddress,
     paymentMethod: 'zarinpal',
     reference: refrenceId,

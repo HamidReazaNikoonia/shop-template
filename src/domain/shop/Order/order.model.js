@@ -30,7 +30,13 @@ const orderSchema = mongoose.Schema(
         product: {
           type: objectId,
           ref: 'Product',
-          required: true,
+          required: false,
+          autopopulate: true,
+        },
+        course: {
+          type: objectId,
+          ref: 'Course',
+          required: false,
           autopopulate: true,
         },
         quantity: {
