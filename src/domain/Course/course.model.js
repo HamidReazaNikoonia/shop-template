@@ -23,6 +23,7 @@ const courseSchema = new Schema({
     type: Schema.Types.ObjectId,
     required: true,
     ref: 'Upload',
+    autopopulate: true,
   },
   sample_media: {
     type: [

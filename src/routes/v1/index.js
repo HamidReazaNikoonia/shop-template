@@ -9,6 +9,8 @@ const transactionRoute = require('../../domain/Transaction/transaction.route');
 const consultRoute = require('../../domain/Consult/consult.route');
 const courseRoute = require('../../domain/Course/course.route');
 const coachRoute = require('../../domain/Coach/coach.route');
+const profileRoute = require('../../domain/Profile/profile.route');
+
 
 
 const {
@@ -66,6 +68,10 @@ const defaultRoutes = [
   {
     path: '/coach',
     route: coachRoute,
+  },
+  {
+    path: '/profile',
+    route: profileRoute,
   },
   {
     path: '/admin/order',
