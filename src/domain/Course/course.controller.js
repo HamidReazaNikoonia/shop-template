@@ -69,9 +69,7 @@ const deleteCourse = catchAsync(async (req, res) => {
 
 
 const getAllCourseCategories = catchAsync(async (req, res) => {
-  console.log({c: null})
   const courseCategory = await courseService.getAllCourseCategories();
-  console.log({c: courseCategory})
   res.status(httpStatus.OK).send(courseCategory);
 });
 

@@ -67,6 +67,7 @@
     "kavenegar": "^1.1.4",
     "lodash": "^4.17.21",
     "moment": "^2.24.0",
+    "moment-jalaali": "^0.10.4",
     "mongoose": "^5.13.20",
     "mongoose-autopopulate": "^1.0.1",
     "morgan": "^1.9.1",

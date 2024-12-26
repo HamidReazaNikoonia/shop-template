@@ -112,6 +112,8 @@ const courseSchema = new Schema({
   },
   slug: String,
   course_expire: Boolean,
+}, {
+  timestamps: true,
 });
 
 // Pre-save hook

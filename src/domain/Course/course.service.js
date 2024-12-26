@@ -37,8 +37,9 @@ const getAllCourses = async ({query}) => {
   const features = new APIFeatures(Course.find({ 'course_status': true }), query)
   .filter()
   .search()
-  .priceRange() // Apply the price range filter
-  .sort()
+  // .priceRange() // Apply the price range filter
+  // .sort()
+  .dateFilter()
   .limitFields()
   .paginate();
 
@@ -46,7 +47,8 @@ const courses = await features.query;
 const total = await new APIFeatures(Course.find({ 'course_status': true }), query)
   .filter()
   .search()
-  .priceRange() // Apply the price range filter
+  .dateFilter()
+  // .priceRange() // Apply the price range filter
   .count().total;
 
 return { data: { total, count: courses.length, courses } };

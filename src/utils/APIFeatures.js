@@ -1,3 +1,6 @@
+const moment = require('moment-jalaali');
+
+
 class APIFeatures {
   constructor(query, queryString) {
     this.query = query;
@@ -7,7 +10,7 @@ class APIFeatures {
 
   filter() {
     let queryObj = { ...this.queryString };
-    const excludedFields = ['page', 'sort', 'limit', 'fields', 'keyword', 'category', 'price_from', 'price_to'];
+    const excludedFields = ['page', 'sort', 'limit', 'fields', 'keyword', 'category', 'price_from', 'price_to', 'date_from', 'date_to'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
     // Handle categories
@@ -59,6 +62,28 @@ class APIFeatures {
     } else {
       this.query = this.query.sort('-createdAt');
     }
+    return this;
+  }
+
+  dateFilter() {
+    const dateFilters = {};
+
+    // Convert Jalali dates to Gregorian
+    if (this.queryString.date_from) {
+      console.log({date_from: moment(this.queryString.date_from, 'jYYYY/jMM/jDD').toDate()})
+      dateFilters.$gte = moment(this.queryString.date_from, 'jYYYY/jMM/jDD').toDate();
+    }
+
+    if (this.queryString.date_to) {
+      console.log({date_to: moment(this.queryString.date_to, 'jYYYY/jMM/jDD').toDate()})
+      dateFilters.$lte = moment(this.queryString.date_to, 'jYYYY/jMM/jDD').toDate();
+    }
+
+    // Apply the date range filter to the query if any filters are provided
+    if (Object.keys(dateFilters).length > 0) {
+      this.query = this.query.find({ createdAt: dateFilters });
+    }
+
     return this;
   }
 
