@@ -112,11 +112,11 @@ const addressSchema = mongoose.Schema(
       },
       addressLine2: String,
       city: {
-        type: String,
+        type: Number,
         required: false,
       },
       state: {
-        type: String,
+        type: Number,
         required: true,
       },
       postalCode: {
@@ -128,6 +128,7 @@ const addressSchema = mongoose.Schema(
         required: false,
         default: 'IRAN',
       },
+      title: String,
     },
   },
   {

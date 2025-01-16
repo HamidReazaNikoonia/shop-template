@@ -13,6 +13,7 @@ const createNewAddressByUser = async ({ customerId, newAddress }) => {
     billingAddress: {
       addressLine1: newAddress.addressLine1,
       ...(newAddress.addressLine2 && { addressLine2: newAddress.addressLine2 }),
+      ...(newAddress.title && {title: newAddress.title}),
       city: newAddress.city,
       state: newAddress.state,
       postalCode: newAddress.postalCode,
