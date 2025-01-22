@@ -34,6 +34,10 @@ const getLoggedUserCart = catchAsync(async (req, res) => {
 
   let cartItems = await cartService.getLoggedUserCart({ userId: req.user.id });
 
+  if (!cartItems) {
+    res.status(httpStatus.OK).send([]);
+  }
+
   res.status(httpStatus.OK).send(cartItems);
 });
 

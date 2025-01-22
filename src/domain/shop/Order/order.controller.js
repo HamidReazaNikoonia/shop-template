@@ -8,6 +8,9 @@ const addressService = require('./address.service');
 // utils
 const ApiError = require('../../../utils/ApiError');
 
+// config
+const config = require('../../../config/config');
+
 /**
  * Asynchronous controller function to retrieve all orders for Admin.
  * Wrapped with `catchAsync` to handle any potential errors in asynchronous calls.
@@ -135,8 +138,6 @@ const createOrderByUser = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
   } else if (!cartId) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Cart Not Defined In Request Body');
-  } else if (!shippingAddress) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'shippingAddress Not Defined In Request Body');
   }
 
   const newOrder = await orderService.createOrderByUser({ cartId, user: req.user, shippingAddress });
@@ -198,7 +199,24 @@ const checkoutOrder = catchAsync(async (req, res) => {
   const {Authority, Status} = req.query;
 
   const updatedOrder = await orderService.checkoutOrder({ orderId, Authority, Status });
-  res.status(httpStatus.OK).send(updatedOrder);
+
+
+
+    // navigate user to the Application with query params
+    // Query params => order_id, transaction_id, payment_status
+
+    // checkoutOrder (updatedOrder variable) return
+    // {order, transaction, payment}
+
+
+    if (!updatedOrder?.order?._id) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Bad Request');
+    }
+
+    res.redirect(`${config.CLIENT_URL}/checkout?order_id=${updatedOrder?.order?._id}&payment_status=${updatedOrder.order?.paymentStatus}`);
+
+
+  // res.status(httpStatus.OK).send(updatedOrder);
 });
 
 const createAddressByUser = catchAsync(async (req, res) => {

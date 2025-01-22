@@ -30,21 +30,16 @@ const calculateTotalPrice = (products) => {
   return totalPrice;
 };
 
-
 const validateCourse = (courses) => {
   const validCourse = [];
 
-
   for (const item of courses) {
-
-
-    const {course_member, course_status, max_member_accept, _id: courseId} = item.course;
+    const { course_member, course_status, max_member_accept, _id: courseId } = item.course;
 
     // check Status
     if (!course_status) {
       throw new ApiError(httpStatus.BAD_REQUEST, `(ERROR::Status_false) This Course Status Is False: ${courseId}`);
     }
-
 
     // check member count validation
     if (Array.isArray(course_member)) {
@@ -53,13 +48,11 @@ const validateCourse = (courses) => {
       }
     }
 
-    validCourse.push({course: courseId , quantity: 1, price: item.price });
+    validCourse.push({ course: courseId, quantity: 1, price: item.price });
   }
 
   return validCourse;
-
-
-}
+};
 
 const validateProducts = async (products) => {
   const validProducts = [];
@@ -113,12 +106,16 @@ const getAllUsersOrders = async ({ user, query }) => {
   console.log(query);
   console.log('-------query------------');
 
-  const features = new APIFeatures(Order.find({ customer: user.id }), Order, query).filter().sort().limitFields().paginate();
+  const features = new APIFeatures(Order.find({ customer: user.id }), query).filter().sort().limitFields().paginate();
   const orders = await features.query;
-  const { total } = await features.count();
+  // const { total } = await features.count();
+
+
+
+
   console.log('---total mother fucker -----');
-  console.log(total);
-  return { data: orders, total: total };
+  // console.log(total);
+  return { data: orders };
 };
 
 const getOrderById = async ({ orderId }) => {
@@ -139,7 +136,7 @@ const getUserOrderById = async ({ orderId, user }) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Order ID');
   }
 
-  const order = await Order.find({ _id: orderId, customer: user.id });
+  const order = await Order.findOne({ _id: orderId, customer: user.id });
   if (!order) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Order Not Found');
   }
@@ -229,9 +226,6 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Cart ID');
   }
 
-  if (!mongoose.Types.ObjectId.isValid(shippingAddress)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid shippingAddress ID');
-  }
   // Get Cart By Id
   const cart = await cartModel.findById(cartId);
 
@@ -245,13 +239,35 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Cart Have Not Any Product');
   }
 
+  // check if cart items contain `Product` or just courses
+  // if cart items are course, we dont need to get Shipping Address from user
+  // check if `Product` Exist in the cartitems
+  //const hasProductItemProperty = cart.cartItem.some(item => 'productId' in item);
 
-  // check shiping Address
-  const isSelectedAddressValid = await Address.findById(shippingAddress);
+  let hasProductItemProperty = false;
 
-  if (!isSelectedAddressValid) {
-    throw new ApiError(httpStatus.NOT_MODIFIED, 'Address Not Exist In DB');
+  for (const item of cart.cartItem) {
+    if (item && item.productId !== undefined) {
+      hasProductItemProperty = true;
+      break; // Exit the loop early if the property is found
+    }
   }
+
+  // if cartItem contain product
+  if (hasProductItemProperty) {
+    // check the Shipping Address
+    if (!mongoose.Types.ObjectId.isValid(shippingAddress)) {
+      throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid shippingAddress ID');
+    }
+
+    // check shiping Address
+    const isSelectedAddressValid = await Address.findById(shippingAddress);
+
+    if (!isSelectedAddressValid) {
+      throw new ApiError(httpStatus.NOT_MODIFIED, 'Address Not Exist In DB');
+    }
+  }
+
 
 
   // Generate Ref
@@ -264,7 +280,6 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
   const productsItemsObj = cart.cartItem.filter((i) => !!i.productId);
   const coursesItemsObj = cart.cartItem.filter((i) => !!i.courseId);
 
-
   // Map `Product` in the Cart
   const productsItems = productsItemsObj.map((item) => {
     return {
@@ -273,7 +288,6 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
       price: item.price,
     };
   });
-
 
   // Map Courses in The Cart
   const coursesItems = coursesItemsObj.map((item) => {
@@ -284,21 +298,17 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     };
   });
 
+  // Implement Products and validate product
+  // * Status Should be True and available
+  // * Check Quantity
 
+  let validCourseAndProduct = [];
 
-
-     // Implement Products and validate product
-    // * Status Should be True and available
-   // * Check Quantity
-
-   let validCourseAndProduct = [];
-
-   if (coursesItems.length > 0) {
+  if (coursesItems.length > 0) {
     const validCourse = validateCourse(coursesItems);
     validCourseAndProduct = [...validCourseAndProduct, ...validCourse];
     // Object.assign(validCourseAndProduct, validCourse);
-   }
-
+  }
 
   // Implement Products and validate product
   // * Status Should be True and available
@@ -308,10 +318,7 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     // return validProducts;
     validCourseAndProduct = [...validCourseAndProduct, ...validProducts];
     // Object.assign(validCourseAndProduct, validProducts);
-
   }
-
-
 
   if (!Array.isArray(validCourseAndProduct)) {
     throw new ApiError(httpStatus.BAD_GATEWAY, 'System Could Not Retrive Product');
@@ -321,13 +328,12 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
   const tprice = calculateTotalPrice(validCourseAndProduct);
   const TAX_CONSTANT = 10000;
 
-
   // return validCourseAndProduct;
 
   const newOrder = await Order.create({
     customer: user.id,
     products: validCourseAndProduct,
-    shippingAddress: shippingAddress,
+    ...(shippingAddress && {shippingAddress: shippingAddress}),
     paymentMethod: 'zarinpal',
     reference: refrenceId,
     total: tprice,
@@ -338,11 +344,11 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     throw new ApiError(httpStatus.EXPECTATION_FAILED, 'Order Could Not Save In DB');
   }
 
-   // *** payment ***
+  // *** payment ***
   // Send Payment Request to Get TOKEN
   const factorNumber = uuidv4();
   console.log(config.CLIENT_URL);
-  console.log({tprice: newOrder.totalAmount})
+  console.log({ tprice: newOrder.totalAmount });
   console.log('hooo');
   const zarinpal = ZarinpalCheckout.create('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', true);
   const payment = await zarinpal.PaymentRequest({
@@ -366,7 +372,7 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     order_id: newOrder._id,
     amount: newOrder.totalAmount,
     factorNumber: payment.authority,
-    tax: TAX_CONSTANT
+    tax: TAX_CONSTANT,
   });
 
   const savedTransaction = await transaction.save();
@@ -378,7 +384,7 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
   // Delete Cart
   await cartModel.findByIdAndDelete(cart._id);
 
-  return {newOrder, transaction, payment};
+  return { newOrder, transaction, payment };
 };
 
 const updateOrder = async ({ orderId, orderData }) => {
@@ -456,19 +462,16 @@ const checkoutOrder = async ({ orderId, Authority: authorityCode, Status: paymen
     throw new ApiError(httpStatus.NOT_FOUND, 'Order Could Not Fount');
   }
 
-
   // Validate order
   if (order.soft_delete) {
     throw new ApiError(httpStatus.NOT_FOUND, 'This Order Not Found');
   }
 
-
   // get Transaction
-  const transaction = await Transaction.findOne({order_id: order._id});
+  const transaction = await Transaction.findOne({ order_id: order._id });
 
   // Order and Transaction should be same
   // order.totalprice === trancation.amount
-
 
   // Verify Payment with Payment gateway (zarinpal)
   // Verify Payment
@@ -518,7 +521,6 @@ const checkoutOrder = async ({ orderId, Authority: authorityCode, Status: paymen
     throw new ApiError(httpStatus[201], 'تراکنش وریفای شده است.');
   }
 
-
   const payment_details = {
     code: payment.data.code,
     message: payment.data.message,
@@ -527,8 +529,7 @@ const checkoutOrder = async ({ orderId, Authority: authorityCode, Status: paymen
     fee_type: payment.data.fee_type,
     fee: payment.data.fee,
     shaparak_fee: payment.data.shaparak_fee,
-  }
-
+  };
 
   // Transaction Pay Successfully
   if (payment.data.code === 100 && payment.data.message === 'Paid') {
@@ -543,15 +544,11 @@ const checkoutOrder = async ({ orderId, Authority: authorityCode, Status: paymen
     await order.save();
   }
 
-
   // call checkAndUpdateOrderProductPrices
   // call decrementProductCount
 
-
-
-  return {order, transaction, payment};
+  return { order, transaction, payment };
 };
-
 
 // STATIC METHODS
 

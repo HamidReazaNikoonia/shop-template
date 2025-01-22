@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const objectId = mongoose.Types.ObjectId;
 
 // Enum Constants
-const orderStatusEnum = ['ordered', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned'];
+const orderStatusEnum = ['waiting', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned', 'finish'];
 const paymentMethodEnum = ['credit_card', 'zarinpal', 'bank_transfer', 'cash_on_delivery'];
 
 // Create Order Schema
@@ -53,7 +53,7 @@ const orderSchema = mongoose.Schema(
     status: {
       type: String,
       enum: orderStatusEnum,
-      default: 'ordered',
+      default: 'waiting',
     },
     paymentMethod: {
       type: String,
@@ -73,6 +73,7 @@ const orderSchema = mongoose.Schema(
     shippingAddress: {
       type: objectId,
       ref: 'Address',
+      autopopulate: true,
     },
     billingAddress: {
       type: objectId,
