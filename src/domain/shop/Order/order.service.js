@@ -236,7 +236,7 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
 
   // if cart empty
   if (!cart.cartItem || cart.cartItem.length === 0) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Cart Have Not Any Product');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Cart Have Not Any Item');
   }
 
   // check if cart items contain `Product` or just courses
@@ -381,8 +381,7 @@ const createOrderByUser = async ({ cartId, user, shippingAddress }) => {
     throw new ApiError(httpStatus[500], 'Transaction Could Not Save In DB');
   }
 
-  // Delete Cart
-  await cartModel.findByIdAndDelete(cart._id);
+
 
   return { newOrder, transaction, payment };
 };
@@ -533,6 +532,12 @@ const checkoutOrder = async ({ orderId, Authority: authorityCode, Status: paymen
 
   // Transaction Pay Successfully
   if (payment.data.code === 100 && payment.data.message === 'Paid') {
+
+     // Delete Cart
+     await cartModel.deleteOne({userId: order.customer});
+
+
+
     // Update Transaction
     transaction.status = true;
     transaction.payment_reference_id = payment.data.ref_id;
@@ -546,6 +551,7 @@ const checkoutOrder = async ({ orderId, Authority: authorityCode, Status: paymen
 
   // call checkAndUpdateOrderProductPrices
   // call decrementProductCount
+
 
   return { order, transaction, payment };
 };

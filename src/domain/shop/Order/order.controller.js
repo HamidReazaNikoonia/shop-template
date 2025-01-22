@@ -198,6 +198,13 @@ const checkoutOrder = catchAsync(async (req, res) => {
   const { orderId } = req.params;
   const {Authority, Status} = req.query;
 
+
+  if (Status !== "OK") {
+    return res.redirect(`${config.CLIENT_URL}/checkout?order_id=${orderId}&payment_status=false`);
+
+  }
+
+
   const updatedOrder = await orderService.checkoutOrder({ orderId, Authority, Status });
 
 
@@ -207,6 +214,7 @@ const checkoutOrder = catchAsync(async (req, res) => {
 
     // checkoutOrder (updatedOrder variable) return
     // {order, transaction, payment}
+
 
 
     if (!updatedOrder?.order?._id) {
