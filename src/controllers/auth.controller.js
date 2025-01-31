@@ -19,9 +19,9 @@ const login = catchAsync(async (req, res) => {
 });
 
 const loginByOTP = catchAsync(async (req, res) => {
-  const { mobile } = req.body;
+  const { mobile, name, family } = req.body;
 
-  const user = await authService.getUserForOTP({ mobile });
+  const user = await authService.getUserForOTP({ mobile, name, family });
 
   // generate OTP
   const otpStri = randomstring.generate({

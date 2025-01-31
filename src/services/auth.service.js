@@ -5,12 +5,12 @@ const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
 
-const getUserForOTP = async ({ mobile }) => {
+const getUserForOTP = async ({ mobile, name, family }) => {
   const userDoc = await userService.getUserByMobile(mobile);
 
   // if user not exist
   if (!userDoc) {
-    return await userService.createUserByOTP({ mobile });
+    return await userService.createUserByOTP({ mobile, first_name: name, last_name: family });
   }
 
   // if user exist

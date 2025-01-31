@@ -1,8 +1,8 @@
 const httpStatus = require('http-status');
 const { User } = require('../models');
+
+
 const ApiError = require('../utils/ApiError');
-
-
 
 const createUserByOTP = async (userBody) => {
   return User.create(userBody);
@@ -76,8 +76,7 @@ const updateUserById = async (userId, updateBody) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
 
-  const {mobile, otp, role, isEmailVerified, password, ...restUpdateBody } = updateBody;
-
+  const { mobile, otp, role, isEmailVerified, password, ...restUpdateBody } = updateBody;
 
   Object.assign(user, restUpdateBody);
   await user.save();
