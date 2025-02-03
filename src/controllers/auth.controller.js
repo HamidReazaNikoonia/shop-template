@@ -3,6 +3,8 @@ const randomstring = require('randomstring');
 const catchAsync = require('../utils/catchAsync');
 const ApiError = require('../utils/ApiError');
 const { authService, userService, tokenService, emailService } = require('../services');
+const { createProfile, getProfile } = require('../domain/Profile/profile.service');
+const ProfileModel = require('../domain/Profile/profile.model');
 const { Lookup } = require('../services/sms/smsProvider');
 
 const register = catchAsync(async (req, res) => {
@@ -62,10 +64,19 @@ const validateOTPLogin = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'OTP code not correct');
   }
 
+  // Create Profile for this User if it not exist
+  let profile = await ProfileModel.find({user: userDoc.id});
+
+  // check if profile exist
+  if (!profile || profile?.length === 0) {
+    console.log('PROFILE FOR USER CREATED');
+    profile = await createProfile(userDoc.id);
+  }
+
   // generate Token
   const tokens = await tokenService.generateAuthTokens(userDoc);
 
-  res.send({ userDoc, tokens });
+  res.send({ userDoc, tokens, profile });
 });
 
 const logout = catchAsync(async (req, res) => {

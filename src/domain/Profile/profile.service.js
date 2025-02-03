@@ -8,20 +8,43 @@ const {Course} = require('../Course/course.model');
 
 
 
+// create Profile Service
+const createProfile = async (userId) => {
+  const profile = await Profile.create({ user: userId });
+  return profile;
+}
+
+
+
 const getProfile = async (userId) => {
    // get User Orders
-  //  const UserOrders = await Order.find({ user: user.id });
+   const UserOrders = await Order.find({ customer: userId });
+
+   const courses = [];
+
+   // Get ALl User Courses from User Orders
+   if (Array.isArray(UserOrders)) {
+    if (UserOrders.length !== 0) {
+        for (let orderItem of UserOrders) {
+          for (let orderProducts of orderItem.products) {
+            if (orderProducts.course) {
+              courses.push(orderProducts.course);
+            }
+          }
+        }
+    }
+   }
 
   //  // Get Users courses
   //  const userCourses = await Course.find({ user: user.id });
 
   //  // Get User Favorites [Product, Course]
   //  return { user, orders: UserOrders };
-  const profile = await Profile.findOne({ user_id: userId })
+  const profile = await Profile.findOne({ user: userId })
   if (!profile) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Profile not found');
   }
-  return profile;
+  return {profile, orders: UserOrders, courses};
 };
 
 const updateProfile = async (userId, updateData) => {
@@ -44,5 +67,6 @@ const updateProfile = async (userId, updateData) => {
 module.exports = {
   getProfile,
   updateProfile,
+  createProfile
 };
 
