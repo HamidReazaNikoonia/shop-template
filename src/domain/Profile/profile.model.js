@@ -19,6 +19,12 @@ const profileSchema = new mongoose.Schema(
         ref: 'Course',
       },
     ],
+    courses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+      },
+    ],
   },
   { timestamps: true }
 );

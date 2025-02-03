@@ -95,8 +95,8 @@ const courseSchema = new Schema({
       subject_title: String,
       status: {
         type: String,
-        enum: ['FREE', 'PAYED'],
-        default: 'PAYED'
+        enum: ['PUBLIC', 'PRIVATE'],
+        default: 'PRIVATE'
       },
       duration: Number, // minute
       files: {

@@ -1,6 +1,18 @@
+const path = require('node:path');
+const fs = require('node:fs');
+const httpStatus = require('http-status');
 const {Course, CourseCategory} = require('./course.model');
 const APIFeatures = require('../../utils/APIFeatures');
 const User = require('../../models/user.model'); // Assuming User model exists
+
+const ApiError = require('../../utils/ApiError');
+
+
+// Security helper function
+function isSafePath(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  return resolvedPath.startsWith(path.resolve(__dirname, '../../..' ,'storage'));
+}
 
 const applyForCourse = async ({ courseId, userId }) => {
   const courseDoc = await Course.findById(courseId);
@@ -87,6 +99,21 @@ const deleteCourse = async (courseId) => {
 };
 
 
+// Send Private Course File
+const sendFileDirectly = async (res, fileName) => {
+  const filePath = path.join(__dirname, '../../..' ,'storage', fileName);
+
+  // Validate file path to prevent directory traversal
+  if (!isSafePath(filePath)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid file path');
+  }
+
+  res.setHeader('Content-Type', 'video/mp4');
+  const stream = fs.createReadStream(filePath);
+  stream.pipe(res);
+}
+
+
 // Course Category
 
 const getAllCourseCategories = async () => {
@@ -107,5 +134,6 @@ module.exports = {
   getAllCourseCategories,
   createCourseCategory,
   deleteCourse,
-  updateCourse
+  updateCourse,
+  sendFileDirectly
 };

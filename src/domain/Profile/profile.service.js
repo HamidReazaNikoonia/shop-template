@@ -48,7 +48,7 @@ const getProfile = async (userId) => {
 };
 
 const updateProfile = async (userId, updateData) => {
-  let profile = await Profile.findOne({ user_id: userId });
+  let profile = await Profile.findOne({ user: userId });
   if (!profile) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Profile not found');
   }
@@ -64,9 +64,46 @@ const updateProfile = async (userId, updateData) => {
   return profile;
 };
 
+
+const getUserCourse = async ({userId, courseId}) => {
+  //  check if user exist and authenticate
+  if (!userId) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+  }
+
+  // get Specific Course
+  const specificCourse = await Course.findById(courseId);
+
+   // get user profile
+    const profile = await  Profile.findOne({ user: userId });
+
+
+  // check if course exist
+  if (!specificCourse) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Course not found');
+  }
+
+  // check if Profile not Exist
+  if (!profile) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Course not found');
+  }
+
+
+  // check if User Have Access to this course
+  const userCourseAccess = profile.courses.includes(courseId);
+
+
+
+  return {course: specificCourse, userCourseAccess, profile};
+
+
+
+}
+
 module.exports = {
   getProfile,
   updateProfile,
+  getUserCourse,
   createProfile
 };
 

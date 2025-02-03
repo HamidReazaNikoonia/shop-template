@@ -1,8 +1,11 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
 const catchAsync = require('../../utils/catchAsync');
+const ApiError = require('../../utils/ApiError');
 
 const courseService = require('./course.service');
+const { Course }  = require('./course.model');
+const Upload = require('../../services/uploader/uploader.model');
 
 const getAllCourses = catchAsync(async (req, res) => {
   const courses = await courseService.getAllCourses({query: req.query});
@@ -10,7 +13,6 @@ const getAllCourses = catchAsync(async (req, res) => {
 });
 
 const getCourseBySlugOrId = catchAsync(async (req, res) => {
-  console.log('kir');
 
   const {slug} = req.params;
 
@@ -65,6 +67,69 @@ const deleteCourse = catchAsync(async (req, res) => {
 
 
 
+// Get Private Course files
+
+// Access verification function
+async function verifyCourseAccess(userId, courseId) {
+
+
+  return true;
+  // Implement your access logic, example:
+  // const enrollment = await Enrollment.findOne({
+  //   user: userId,
+  //   course: courseId,
+  //   status: 'ACTIVE'
+  // });
+
+  // return !!enrollment;
+}
+
+const getCoursePrivateFile = catchAsync(async (req, res) => {
+  const { fileId } = req.params;
+  const userId = req.user?.id; // From authentication middleware
+
+  if (!userId || !fileId) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+  }
+
+  // Find the file metadata
+  const fileDoc = await Upload.findById(fileId);
+  if (!fileDoc) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'File not found');
+  }
+
+  // Find the associated course
+  const course = await Course.findOne({
+    'course_objects.files': fileId
+  }).populate('course_objects.files');
+
+  if (!course) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Course not found');
+  }
+
+  // Find the specific course object
+  const courseObject = course.course_objects.find(obj =>
+    obj.files._id.equals(fileId)
+  );
+
+  //  Check file accessibility
+  if (courseObject.status === 'PUBLIC') {
+    // return file if it PUBLIC
+    return courseService.sendFileDirectly(res, fileDoc.file_name);
+  }
+
+  //  Verify user access for private files
+  const hasAccess = await verifyCourseAccess(userId, course._id);
+
+  if (!hasAccess) {
+      throw new ApiError(httpStatus[403], 'Access denied');
+  }
+
+  //  Send the file if all checks pass
+  courseService.sendFileDirectly(res, fileDoc.file_name);
+
+});
+
 // Course  Category
 
 
@@ -88,5 +153,6 @@ module.exports = {
   getAllCourseCategories,
   createCourseCategory,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  getCoursePrivateFile
 };

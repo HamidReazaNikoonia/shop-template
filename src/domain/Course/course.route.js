@@ -1,5 +1,6 @@
 const express = require('express');
 const courseController = require('./course.controller');
+const auth = require('../../middlewares/auth');
 
 const router = express.Router();
 
@@ -23,5 +24,9 @@ router.put('/:course_id', courseController.updateCourse);
 
 // Delete a course
 router.delete('/:course_id', courseController.deleteCourse);
+
+
+// Get course File (Provate)
+router.get('/file/:fileId', auth(), courseController.getCoursePrivateFile);
 
 module.exports = router;
