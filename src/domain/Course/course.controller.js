@@ -69,20 +69,6 @@ const deleteCourse = catchAsync(async (req, res) => {
 
 // Get Private Course files
 
-// Access verification function
-async function verifyCourseAccess(userId, courseId) {
-
-
-  return true;
-  // Implement your access logic, example:
-  // const enrollment = await Enrollment.findOne({
-  //   user: userId,
-  //   course: courseId,
-  //   status: 'ACTIVE'
-  // });
-
-  // return !!enrollment;
-}
 
 const getCoursePrivateFile = catchAsync(async (req, res) => {
   const { fileId } = req.params;
@@ -119,7 +105,8 @@ const getCoursePrivateFile = catchAsync(async (req, res) => {
   }
 
   //  Verify user access for private files
-  const hasAccess = await verifyCourseAccess(userId, course._id);
+  const hasAccess = await courseService.verifyCourseAccess(userId, course._id);
+
 
   if (!hasAccess) {
       throw new ApiError(httpStatus[403], 'Access denied');

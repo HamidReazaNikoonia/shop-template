@@ -4,6 +4,7 @@ const httpStatus = require('http-status');
 const {Course, CourseCategory} = require('./course.model');
 const APIFeatures = require('../../utils/APIFeatures');
 const User = require('../../models/user.model'); // Assuming User model exists
+const Profile = require('../Profile/profile.model');
 
 const ApiError = require('../../utils/ApiError');
 
@@ -114,6 +115,36 @@ const sendFileDirectly = async (res, fileName) => {
 }
 
 
+// Access verification function
+const verifyCourseAccess = async (userId, courseId) => {
+
+  // get user profile
+  const profile = await  Profile.findOne({ user: userId });
+
+  // check if Profile not Exist
+  if (!profile) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Course not found');
+  }
+
+
+  // check if User Have Access to this course
+  const userCourseAccess = profile.courses.includes(courseId);
+
+  console.log({userCourseAccess});
+  console.log({kir: profile.courses});
+
+  return !!userCourseAccess;
+  // Implement your access logic, example:
+  // const enrollment = await Enrollment.findOne({
+  //   user: userId,
+  //   course: courseId,
+  //   status: 'ACTIVE'
+  // });
+
+  // return !!enrollment;
+}
+
+
 // Course Category
 
 const getAllCourseCategories = async () => {
@@ -135,5 +166,6 @@ module.exports = {
   createCourseCategory,
   deleteCourse,
   updateCourse,
-  sendFileDirectly
+  sendFileDirectly,
+  verifyCourseAccess
 };
