@@ -26,4 +26,4 @@ yarn-error.log*
 
 
 # Upload Storage
-/storage
+# /storage
