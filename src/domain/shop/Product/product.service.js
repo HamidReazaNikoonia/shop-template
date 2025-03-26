@@ -58,11 +58,22 @@ const getAllProduct = async ({ query }) => {
 };
 
 const getAllProductForAdmin = async ({ query }) => {
-  const features = new APIFeatures(Product.find(), Product, query).filter().sort().limitFields().paginate();
-  const products = await features.query;
+  const features = new APIFeatures(Product.find(), query)
+    .filter()
+    .search()
+    .priceRange() // Apply the price range filter
+    .sort()
+    .limitFields()
+    .paginate();
 
-  // const total = await features.count().total;
-  return { data: { count: products.length, products } };
+  const products = await features.query;
+  const total = await new APIFeatures(Product.find(), query)
+    .filter()
+    .search()
+    .priceRange() // Apply the price range filter
+    .count().total;
+
+  return { data: { total, count: products.length, products } };
 };
 
 const getProductBySlug = async ({ productId, user }) => {
@@ -256,6 +267,7 @@ const updateProduct = async ({ productId, productData }) => {
   const productBody = {
     ...(productData.countInStock && { countInStock: productData.countInStock }),
     ...(productData.price && { price: productData.price }),
+    ...(productData.status && { status: productData.status }),
     ...(productData.description && { description: productData.description }),
     ...(productData.subtitle && { subtitle: productData.subtitle }),
     ...(productData.title && { title: productData.title }),
@@ -267,10 +279,7 @@ const updateProduct = async ({ productId, productData }) => {
     ...(productData.slug && { slug: productData.slug }),
     ...(productData.qr_code && { qr_code: productData.qr_code }),
     ...(productData.average_rating && { average_rating: productData.average_rating }),
-     is_available: is_available,
-
-
-
+    ...(productData.is_available && { is_available: productData.is_available }),
   };
 
   if (rest.is_giftcard) {

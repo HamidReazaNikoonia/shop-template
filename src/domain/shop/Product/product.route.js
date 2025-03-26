@@ -24,17 +24,14 @@ publicRouter.route('/collection').get(collectionController.getAllCollection);
 // get Collections By Collection Id
 publicRouter.route('/collection/:collectionId').get(collectionController.getCollectionById);
 
-
 // Get All Categories
 publicRouter.route('/categories').get(categoryController.getCategories);
 publicRouter.route('/:productId/:slug').get(productController.getProductBySlug);
 
-publicRouter.route('/:productId/:slug/review')
+publicRouter
+  .route('/:productId/:slug/review')
   .get(productController.getProductReview)
   .post(productController.createProductReview);
-
-
-
 
 /** ********************************************************************************** */
 
@@ -63,13 +60,8 @@ adminRouter
 
 /** Category Routes */
 
-adminRouter
-  .route('/categories')
-  .post(auth(),  categoryController.createCategory);
+adminRouter.route('/categories').post(auth(), categoryController.createCategory);
 
-
-adminRouter
-  .route('/categories/:categoryId')
-  .delete(auth(),  categoryController.deleteCategory);
+adminRouter.route('/categories/:categoryId').delete(auth(), categoryController.deleteCategory);
 
 module.exports = { adminRouter, publicRouter };

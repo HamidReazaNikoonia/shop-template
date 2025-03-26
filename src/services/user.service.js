@@ -1,7 +1,6 @@
 const httpStatus = require('http-status');
 const { User } = require('../models');
 
-
 const ApiError = require('../utils/ApiError');
 
 const createUserByOTP = async (userBody) => {
@@ -30,7 +29,17 @@ const createUser = async (userBody) => {
  * @returns {Promise<QueryResult>}
  */
 const queryUsers = async (filter, options) => {
-  const users = await User.paginate(filter, options);
+  // Extract 'q' from filter and remove it from the original filter object
+  const { q, ...otherFilters } = filter;
+
+  // If there's a search query, create a search condition
+  if (q) {
+    // eslint-disable-next-line security/detect-non-literal-regexp
+    const searchRegex = new RegExp(q, 'i'); // Case-insensitive search
+    otherFilters.$or = [{ first_name: searchRegex }, { last_name: searchRegex }, { mobile: searchRegex }];
+  }
+
+  const users = await User.paginate(otherFilters, options);
   return users;
 };
 

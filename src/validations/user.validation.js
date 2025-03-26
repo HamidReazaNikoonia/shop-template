@@ -14,11 +14,14 @@ const createUser = {
 
 const getUsers = {
   query: Joi.object().keys({
-    name: Joi.string(),
+    first_name: Joi.string(),
+    last_name: Joi.string(),
+    mobile: Joi.string(),
     role: Joi.string(),
     sortBy: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+    q: Joi.string(),
   }),
 };
 

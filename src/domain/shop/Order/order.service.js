@@ -94,12 +94,27 @@ const getAllOrders = async ({ query }) => {
   console.log(query);
   console.log('-------query------------');
 
-  const features = new APIFeatures(Order.find(), Order, query).filter().sort().limitFields().paginate();
+  const features = new APIFeatures(Order.find(), query)
+    .filter()
+    .search()
+    .sort()
+    .limitFields()
+    .paginate();
+
   const orders = await features.query;
-  const { total } = await features.count();
-  console.log('---total mother fucker -----');
-  console.log(total);
-  return { data: orders, total };
+  const total = await new APIFeatures(Order.find(), query)
+    .filter()
+    .search()
+    .count().total;
+
+  return { data: { total, count: orders.length, orders } };
+
+  // const features = new APIFeatures(Order.find(), Order, query).filter().sort().limitFields().paginate();
+  // const orders = await features.query;
+  // const { total } = await features.count();
+  // console.log('---total mother fucker -----');
+  // console.log(total);
+  // return { data: orders, total };
 };
 
 const getAllUsersOrders = async ({ user, query }) => {

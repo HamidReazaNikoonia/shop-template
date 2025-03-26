@@ -141,7 +141,7 @@ const productSchema = mongoose.Schema(
     status: {
       type: String,
       enum: productTypesEnum,
-      default: "publish"
+      default: 'publish',
     },
     qr_code: String,
     // product details

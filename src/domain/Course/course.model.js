@@ -34,6 +34,7 @@ const courseSchema = new Schema({
         file: {
           type: Schema.Types.ObjectId,
           ref: 'Upload',
+          autopopulate: true,
         },
       },
     ],

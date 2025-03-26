@@ -27,6 +27,7 @@ const updateProduct = {
   body: Joi.object().keys({
     title: Joi.string(),
     subtitle: Joi.string(),
+    status: Joi.string().valid('publish', 'draft', 'rejected'),
     description: Joi.string().min(30).max(900),
     brand: Joi.string(),
     slug: Joi.string(),
@@ -34,14 +35,14 @@ const updateProduct = {
     qr_code: Joi.string(),
     discountable: {
       status: Joi.boolean(),
-      percent: Joi.number()
+      percent: Joi.number(),
     },
     price: Joi.number(),
     countInStock: Joi.number(),
     images: Joi.array().items(Joi.string().hex().length(24)),
     thumbnail: Joi.string().hex().length(24),
     category: Joi.string().hex().length(24),
-    is_available: Joi.boolean()
+    is_available: Joi.boolean(),
   }),
 };
 
