@@ -16,7 +16,7 @@ const generalSearch = async ({ query }) => {
 
   const {q, page = 1, limit = 5} = query
 
-  const searchFilter = { $text: { $search: query.q } };
+  const searchFilter = { $text: { $search: q } };
   const projection = { title: 1, sub_title: 1, score: { $meta: 'textScore' } };
   const pageNumber = parseInt(page);
   const limitNumber = parseInt(limit);
