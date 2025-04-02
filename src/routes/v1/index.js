@@ -26,6 +26,9 @@ const {orderRoute, orderRouteForAdmin} = require("../../domain/shop/Order/order.
 const timeSlotRoute = require('../../domain/TimeSlot/time_slot.route');
 const uploaderRoute = require('../../services/uploader/uploader.controller');
 
+// Search
+const searchRoute = require('../../domain/Search/search.route');
+
 const router = express.Router();
 
 const defaultRoutes = [
@@ -72,6 +75,10 @@ const defaultRoutes = [
   {
     path: '/profile',
     route: profileRoute,
+  },
+  {
+    path: '/search',
+    route: searchRoute,
   },
   {
     path: '/admin/order',

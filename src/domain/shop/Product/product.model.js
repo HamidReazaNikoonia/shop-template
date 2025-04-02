@@ -182,6 +182,10 @@ const productSchema = mongoose.Schema(
   }
 );
 
+
+// Create a text index for better search performance
+productSchema.index({ title: 'text', sub_title: 'text' });
+
 productSchema.plugin(require('mongoose-autopopulate'));
 
 productSchema.virtual('url').get(function () {

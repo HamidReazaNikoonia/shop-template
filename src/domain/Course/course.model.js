@@ -117,6 +117,9 @@ const courseSchema = new Schema({
   timestamps: true,
 });
 
+// Create a text index for better search performance
+courseSchema.index({ title: 'text', sub_title: 'text' });
+
 // Pre-save hook
 courseSchema.pre('save', async function (next) {
   const course = this;
