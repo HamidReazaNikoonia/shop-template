@@ -17,19 +17,19 @@ const generalSearch = async ({ query }) => {
   const {q, page = 1, limit = 5} = query
 
   const searchFilter = { $text: { $search: q } };
-  const projection = { title: 1, sub_title: 1, score: { $meta: 'textScore' } };
+  // const projection = { title: 1, sub_title: 1, score: { $meta: 'textScore' } };
   const pageNumber = parseInt(page);
   const limitNumber = parseInt(limit);
 
 
   const [products, courses] = await Promise.all([
-    Product.find(searchFilter, projection)
+    Product.find(searchFilter)
       .sort({ score: { $meta: 'textScore' } }) // Sort by relevance
       .skip((pageNumber - 1) * limitNumber)
       .limit(limitNumber)
       .lean(),
 
-    Course.find(searchFilter, projection)
+    Course.find(searchFilter)
       .sort({ score: { $meta: 'textScore' } }) // Sort by relevance
       .skip((pageNumber - 1) * limitNumber)
       .limit(limitNumber)
