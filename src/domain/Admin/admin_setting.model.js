@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 // Enum Constant
 // const referenceStatusEnum = ["CREATED", "WAITING", "RESOLVE", "REJECTED"];
@@ -7,10 +7,10 @@ const mongoose = require("mongoose");
 const adminSettingSchema = mongoose.Schema(
   {
     payment: {
-        reference_price: {
-            type: Number,
-            default: 500000,
-        }
+      reference_price: {
+        type: Number,
+        default: 500000,
+      },
     },
     discountable: {
       type: Boolean,
@@ -24,7 +24,6 @@ const adminSettingSchema = mongoose.Schema(
 
 // referenceSchema.plugin(require("mongoose-autopopulate"));
 
-
-const AdminSetting = mongoose.model("AdminSetting", adminSettingSchema);
+const AdminSetting = mongoose.model('AdminSetting', adminSettingSchema);
 
 module.exports = AdminSetting;

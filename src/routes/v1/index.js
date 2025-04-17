@@ -11,8 +11,6 @@ const courseRoute = require('../../domain/Course/course.route');
 const coachRoute = require('../../domain/Coach/coach.route');
 const profileRoute = require('../../domain/Profile/profile.route');
 
-
-
 const {
   adminRouter: productAdminRoute,
   publicRouter: productPublicRoute,
@@ -20,11 +18,14 @@ const {
 
 const cartRouter = require('../../domain/shop/Cart/cart.route');
 
-const {orderRoute, orderRouteForAdmin} = require("../../domain/shop/Order/order.route");
+const { orderRoute, orderRouteForAdmin } = require('../../domain/shop/Order/order.route');
 
 // Admin Routes
 const timeSlotRoute = require('../../domain/TimeSlot/time_slot.route');
 const uploaderRoute = require('../../services/uploader/uploader.controller');
+
+// admin setting
+const { adminSettingRoutes } = require('../../domain/Admin/admin_setting.route');
 
 // Search
 const searchRoute = require('../../domain/Search/search.route');
@@ -62,7 +63,7 @@ const defaultRoutes = [
   },
   {
     path: '/cart',
-    route: cartRouter
+    route: cartRouter,
   },
   {
     path: '/course',
@@ -94,7 +95,11 @@ const defaultRoutes = [
   },
   {
     path: '/admin/setting/upload',
-    route: uploaderRoute
+    route: uploaderRoute,
+  },
+  {
+    path: '/admin/setting/set',
+    route: adminSettingRoutes,
   },
 ];
 
