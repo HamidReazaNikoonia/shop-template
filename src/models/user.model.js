@@ -39,14 +39,6 @@ const userSchema = mongoose.Schema(
       type: String,
       default: 'IRAN',
     },
-    mariage_type: {
-      type: String,
-      enum: ["FAMILY", "NON_FAMILY"],
-    },
-    parent_mariage_type: {
-      type: String,
-      enum: ["FAMILY", "NON_FAMILY"],
-    },
     mobile: {
       type: String,
       required: true,

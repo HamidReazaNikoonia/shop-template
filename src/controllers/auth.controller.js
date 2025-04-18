@@ -21,9 +21,9 @@ const login = catchAsync(async (req, res) => {
 });
 
 const loginByOTP = catchAsync(async (req, res) => {
-  const { mobile, name, family } = req.body;
+  const { mobile, name, family, role } = req.body;
 
-  const user = await authService.getUserForOTP({ mobile, name, family });
+  const user = await authService.getUserForOTP({ mobile, name, family, role });
 
   // generate OTP
   const otpStri = randomstring.generate({
@@ -65,7 +65,7 @@ const validateOTPLogin = catchAsync(async (req, res) => {
   }
 
   // Create Profile for this User if it not exist
-  let profile = await ProfileModel.find({user: userDoc.id});
+  let profile = await ProfileModel.find({ user: userDoc.id });
 
   // check if profile exist
   if (!profile || profile?.length === 0) {

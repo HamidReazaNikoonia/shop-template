@@ -14,7 +14,6 @@ const getCoachById = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(coach);
 });
 
-
 // createCoach
 const createCoach = catchAsync(async (req, res) => {
   const coach = await coachService.createCoach(req.body);
