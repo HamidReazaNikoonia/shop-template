@@ -9,6 +9,8 @@ const router = express.Router();
 router.post('/login-otp', authController.loginByOTP);
 router.post('/validate-otp', authController.validateOTPLogin);
 
+router.post('/login-otp/coach', authController.loginByOTPForCoach);
+router.post('/validate-otp/coach', authController.validateOTPLoginForCoach);
 
 router.post('/register', validate(authValidation.register), authController.register);
 router.post('/login', validate(authValidation.login), authController.login);

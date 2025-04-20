@@ -24,6 +24,25 @@ const getUserForOTP = async ({ mobile, name, family, role }) => {
   return userDoc;
 };
 
+const getCoachUserForOTP = async ({ mobile, name, family }) => {
+  const userDoc = await userService.getCoachUserByMobile(mobile);
+
+  // if user not exist
+  if (!userDoc) {
+    const userData = {
+      mobile,
+      first_name: name,
+      last_name: family,
+      role: 'coach',
+    };
+    const createdUser = await userService.createCoachUserByOTP(userData);
+    return createdUser;
+  }
+
+  // if user exist
+  return userDoc;
+};
+
 /**
  * Login with username and password
  * @param {string} email
@@ -111,6 +130,7 @@ const verifyEmail = async (verifyEmailToken) => {
 
 module.exports = {
   getUserForOTP,
+  getCoachUserForOTP,
   loginUserWithEmailAndPassword,
   logout,
   refreshAuth,

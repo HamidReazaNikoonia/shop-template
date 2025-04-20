@@ -1,10 +1,15 @@
 const httpStatus = require('http-status');
 const { User } = require('../models');
+const Coach = require('../domain/Coach/coach.model');
 
 const ApiError = require('../utils/ApiError');
 
 const createUserByOTP = async (userBody) => {
   return User.create(userBody);
+};
+
+const createCoachUserByOTP = async (userBody) => {
+  return Coach.create(userBody);
 };
 
 /**
@@ -53,6 +58,15 @@ const getUserById = async (id) => {
 };
 
 /**
+ * Get coach user by id
+ * @param {ObjectId} id
+ * @returns {Promise<User>}
+ */
+const getCoachUserById = async (id) => {
+  return Coach.findById(id);
+};
+
+/**
  * Get user by email
  * @param {string} email
  * @returns {Promise<User>}
@@ -68,6 +82,15 @@ const getUserByEmail = async (email) => {
  */
 const getUserByMobile = async (mobile) => {
   return User.findOne({ mobile });
+};
+
+/**
+ * Get Coach user by mobile
+ * @param {string} mobile
+ * @returns {Promise<User>}
+ */
+const getCoachUserByMobile = async (mobile) => {
+  return Coach.findOne({ mobile });
 };
 
 /**
@@ -108,10 +131,13 @@ const deleteUserById = async (userId) => {
 
 module.exports = {
   createUserByOTP,
+  createCoachUserByOTP,
   createUser,
   queryUsers,
   getUserById,
+  getCoachUserById,
   getUserByMobile,
+  getCoachUserByMobile,
   getUserByEmail,
   updateUserById,
   deleteUserById,

@@ -42,6 +42,28 @@ const loginByOTP = catchAsync(async (req, res) => {
   res.send({ user });
 });
 
+const loginByOTPForCoach = catchAsync(async (req, res) => {
+  const { mobile, name, family } = req.body;
+
+  const user = await authService.getCoachUserForOTP({ mobile, name, family });
+
+  // generate OTP
+  const otpStri = randomstring.generate({
+    length: 6,
+    charset: 'numeric',
+  });
+
+  // await Lookup(user.mobile, otpStri);
+
+  user.otp = otpStri;
+  await user.save();
+
+  // Send OTP By SMS to User
+
+  // const tokens = await tokenService.generateAuthTokens(user);
+  res.send({ user });
+});
+
 const validateOTPLogin = catchAsync(async (req, res) => {
   const { otpCode, userId } = req.body;
 
@@ -55,6 +77,43 @@ const validateOTPLogin = catchAsync(async (req, res) => {
 
   // validate User OTP by database
   const userDoc = await userService.getUserById(userId);
+
+  if (!userDoc) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+  if (userDoc.otp !== otpCode) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'OTP code not correct');
+  }
+
+  // Create Profile for this User if it not exist
+  let profile = await ProfileModel.find({ user: userDoc.id });
+
+  // check if profile exist
+  if (!profile || profile?.length === 0) {
+    console.log('PROFILE FOR USER CREATED');
+    profile = await createProfile(userDoc.id);
+  }
+
+  // generate Token
+  const tokens = await tokenService.generateAuthTokens(userDoc);
+
+  res.send({ userDoc, tokens, profile });
+});
+
+const validateOTPLoginForCoach = catchAsync(async (req, res) => {
+  const { otpCode, userId } = req.body;
+
+  if (!otpCode) {
+    throw new ApiError(httpStatus.NOT_ACCEPTABLE, 'OTP code not exist');
+  }
+
+  if (!userId) {
+    throw new ApiError(httpStatus.NOT_ACCEPTABLE, 'User id not exist');
+  }
+
+  // validate User OTP by database
+  const userDoc = await userService.getCoachUserById(userId);
 
   if (!userDoc) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
@@ -113,7 +172,9 @@ const verifyEmail = catchAsync(async (req, res) => {
 
 module.exports = {
   loginByOTP,
+  loginByOTPForCoach,
   validateOTPLogin,
+  validateOTPLoginForCoach,
   register,
   login,
   logout,
