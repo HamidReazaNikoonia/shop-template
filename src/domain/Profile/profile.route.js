@@ -15,4 +15,6 @@ router.get('/:user_id/course/:course_id', auth(), profileController.getUserCours
 // Update liked products or courses
 router.put('/:user_id', profileController.updateProfile);
 
+router.patch('/:user_id/complete-profile', auth(), profileController.completeProfile);
+
 module.exports = router;

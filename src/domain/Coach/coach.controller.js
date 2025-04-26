@@ -20,8 +20,16 @@ const createCoach = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(coach);
 });
 
+// Admin
+// Get a specific coach by ID
+const getCoachByIdForAdmin = catchAsync(async (req, res) => {
+  const coach = await coachService.getCoachByIdForAdmin(req.params.coachId);
+  res.status(httpStatus.OK).send(coach);
+});
+
 module.exports = {
   getAllCoaches,
   createCoach,
   getCoachById,
+  getCoachByIdForAdmin,
 };

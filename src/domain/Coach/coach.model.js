@@ -62,6 +62,6 @@ const coachSchema = new Schema({
   enrolledCourses: [enrolledCourseSchema],
 });
 
-const Coach = UserModel.discriminator('coach', coachSchema);
+const Coach = UserModel.discriminator('Coach', coachSchema);
 
 module.exports = Coach;

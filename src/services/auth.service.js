@@ -5,23 +5,22 @@ const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
 
-const getUserForOTP = async ({ mobile, name, family, role }) => {
+const getUserForOTP = async ({ mobile, role }) => {
   const userDoc = await userService.getUserByMobile(mobile);
 
   // if user not exist
   if (!userDoc) {
     const userData = {
       mobile,
-      first_name: name,
-      last_name: family,
       ...(role !== 'admin' && { role: role || 'user' }),
     };
     const createdUser = await userService.createUserByOTP(userData);
-    return createdUser;
+    console.log('first')
+    return { createdUser, firstLogin: true };
   }
 
   // if user exist
-  return userDoc;
+  return { createdUser: userDoc, firstLogin: false };
 };
 
 const getCoachUserForOTP = async ({ mobile, name, family }) => {
@@ -36,7 +35,7 @@ const getCoachUserForOTP = async ({ mobile, name, family }) => {
       role: 'coach',
     };
     const createdUser = await userService.createCoachUserByOTP(userData);
-    return createdUser;
+    return { createdUser, firstLogin: true };
   }
 
   // if user exist

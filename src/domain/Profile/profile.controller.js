@@ -25,6 +25,20 @@ const updateProfile = catchAsync(async (req, res) => {
 });
 
 
+// Update liked products or courses
+const completeProfile = catchAsync(async (req, res) => {
+  const { user_id } = req.params;
+  const { name, family } = req.body;
+
+  const updatedProfile = await profileService.completeProfile(user_id, req.user, {
+    name,
+    family,
+  });
+
+  res.status(httpStatus.OK).send(updatedProfile);
+});
+
+
 const getUserCourse = catchAsync(async (req, res) => {
   const { user_id, course_id } = req.params;
 
@@ -44,4 +58,5 @@ module.exports = {
   getProfile,
   updateProfile,
   getUserCourse,
+  completeProfile,
 };

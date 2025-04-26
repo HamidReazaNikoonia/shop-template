@@ -21,9 +21,9 @@ const login = catchAsync(async (req, res) => {
 });
 
 const loginByOTP = catchAsync(async (req, res) => {
-  const { mobile, name, family, role } = req.body;
+  const { mobile, role } = req.body;
 
-  const user = await authService.getUserForOTP({ mobile, name, family, role });
+  const { createdUser, firstLogin } = await authService.getUserForOTP({ mobile, role });
 
   // generate OTP
   const otpStri = randomstring.generate({
@@ -31,21 +31,21 @@ const loginByOTP = catchAsync(async (req, res) => {
     charset: 'numeric',
   });
 
-  await Lookup(user.mobile, otpStri);
+  // await Lookup(createdUser.mobile, otpStri);
 
-  user.otp = otpStri;
-  await user.save();
+  createdUser.otp = otpStri;
+  await createdUser.save();
 
   // Send OTP By SMS to User
 
   // const tokens = await tokenService.generateAuthTokens(user);
-  res.send({ user });
+  res.send({ user: createdUser, firstLogin});
 });
 
 const loginByOTPForCoach = catchAsync(async (req, res) => {
   const { mobile, name, family } = req.body;
 
-  const user = await authService.getCoachUserForOTP({ mobile, name, family });
+  const { createdUser, firstLogin } = await authService.getCoachUserForOTP({ mobile, name, family });
 
   // generate OTP
   const otpStri = randomstring.generate({
@@ -55,13 +55,13 @@ const loginByOTPForCoach = catchAsync(async (req, res) => {
 
   // await Lookup(user.mobile, otpStri);
 
-  user.otp = otpStri;
-  await user.save();
+  createdUser.otp = otpStri;
+  await createdUser.save();
 
   // Send OTP By SMS to User
 
   // const tokens = await tokenService.generateAuthTokens(user);
-  res.send({ user });
+  res.send({ user: createdUser, firstLogin });
 });
 
 const validateOTPLogin = catchAsync(async (req, res) => {
