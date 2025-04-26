@@ -1,6 +1,9 @@
+const httpStatus = require('http-status');
 const Coach = require('./coach.model');
 const ApiError = require('../../utils/ApiError');
-const httpStatus = require('http-status');
+
+// Models
+const UserModel = require('../../models/user.model');
 
 // Get all coaches
 const getAllCoaches = async () => {
@@ -26,6 +29,31 @@ const createCoach = async (requestBody) => {
   return newCoach;
 };
 
+const completeCouchInfo = async (user, coachInfo) => {
+  // request data validation
+  if (!coachInfo) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Coach Information Not found');
+  }
+
+  if (!coachInfo?.national_code === ' ' || !coachInfo?.national_code) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'National Code Information Not Valid');
+  }
+
+  const coach = await UserModel.findById(user.id);
+
+  if (!coach) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Coach not found');
+  }
+
+  coach.coach_Information = {
+    ...coach.coach_Information,
+    ...coachInfo,
+  };
+
+  await coach.save();
+  return coach;
+};
+
 // Admin
 
 // Get a specific coach by ID
@@ -42,4 +70,5 @@ module.exports = {
   getCoachById,
   getCoachByIdForAdmin,
   createCoach,
+  completeCouchInfo,
 };

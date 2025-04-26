@@ -60,6 +60,15 @@ const coachSchema = new Schema({
     default: 'none',
   },
   enrolledCourses: [enrolledCourseSchema],
+  coach_Information: {
+    father_name: String,
+    national_code: String,
+    birth_date: String,
+    city: Number,
+    state: Number,
+    description: String,
+    group_name: String,
+  },
 });
 
 const Coach = UserModel.discriminator('Coach', coachSchema);

@@ -1,4 +1,6 @@
 const httpStatus = require('http-status');
+const ApiError = require('../../utils/ApiError');
+
 const catchAsync = require('../../utils/catchAsync');
 const coachService = require('./coach.service');
 
@@ -20,6 +22,16 @@ const createCoach = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(coach);
 });
 
+// update coach coach_Information data
+const completeCouchInfo = catchAsync(async (req, res) => {
+  if (req.user.id !== req.params.coachId) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Not authorized to update this coach information');
+  }
+
+  const coach = await coachService.completeCouchInfo(req.user, req.body);
+  res.status(httpStatus.OK).send(coach);
+});
+
 // Admin
 // Get a specific coach by ID
 const getCoachByIdForAdmin = catchAsync(async (req, res) => {
@@ -32,4 +44,5 @@ module.exports = {
   createCoach,
   getCoachById,
   getCoachByIdForAdmin,
+  completeCouchInfo,
 };
