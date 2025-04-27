@@ -12,7 +12,11 @@ const getAllCoaches = catchAsync(async (req, res) => {
 
 // Get a specific coach by ID
 const getCoachById = catchAsync(async (req, res) => {
-  const coach = await coachService.getCoachById(req.params.couch_id);
+  if (req.params.coachId !== req.user.id) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Not authorized to Get this coach information');
+  }
+
+  const coach = await coachService.getCoachById(req.params.coachId);
   res.status(httpStatus.OK).send(coach);
 });
 

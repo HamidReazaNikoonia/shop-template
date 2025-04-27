@@ -11,12 +11,15 @@ const coachCourseProgramController = require('./courseProgress.controller');
 // Get all coaches
 router.route('/').get(coachController.getAllCoaches).post(coachController.createCoach);
 
+// USER ROUTES
 router.patch(
   '/complete_account/:coachId',
   validate(coachValidation.completeCoachInfo),
   auth(),
   coachController.completeCouchInfo
 );
+
+router.get('/profile/:coachId', auth(), coachController.getCoachById);
 
 router.post('/coach-course-program/:coachId/enroll', coachCourseProgramController.enrollInCourse);
 router.post(
@@ -27,6 +30,8 @@ router.get(
   '/coach-course-program/:coachId/:coachCourseProgramId/current-subject',
   coachCourseProgramController.getCurrentSubject
 );
+
+// ************************
 
 // Get specific coach by ID
 router.get('/admin/:coachId', coachController.getCoachByIdForAdmin);
