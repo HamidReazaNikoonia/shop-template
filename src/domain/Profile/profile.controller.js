@@ -1,7 +1,7 @@
+/* eslint-disable camelcase */
 const httpStatus = require('http-status');
 const catchAsync = require('../../utils/catchAsync');
 const profileService = require('./profile.service');
-const { authenticate } = require('passport');
 const ApiError = require('../../utils/ApiError');
 
 // Get a user's profile
@@ -24,20 +24,19 @@ const updateProfile = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(updatedProfile);
 });
 
-
 // Update liked products or courses
 const completeProfile = catchAsync(async (req, res) => {
   const { user_id } = req.params;
-  const { name, family } = req.body;
+  const { name, family, gender } = req.body;
 
   const updatedProfile = await profileService.completeProfile(user_id, req.user, {
     name,
     family,
+    gender,
   });
 
   res.status(httpStatus.OK).send(updatedProfile);
 });
-
 
 const getUserCourse = catchAsync(async (req, res) => {
   const { user_id, course_id } = req.params;
@@ -50,7 +49,7 @@ const getUserCourse = catchAsync(async (req, res) => {
   if (req.user.id !== user_id) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
   }
-  const userCourse = await profileService.getUserCourse({userId: req.user.id, courseId: course_id});
+  const userCourse = await profileService.getUserCourse({ userId: req.user.id, courseId: course_id });
   res.status(httpStatus.OK).send(userCourse);
 });
 

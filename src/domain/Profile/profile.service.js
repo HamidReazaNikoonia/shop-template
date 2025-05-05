@@ -62,7 +62,7 @@ const updateProfile = async (userId, updateData) => {
   return profile;
 };
 
-const completeProfile = async (userId, user, { name, family }) => {
+const completeProfile = async (userId, user, { name, family, gender }) => {
   // const profile = await Profile.findOne({ user: userId });
 
   if (!user.id) {
@@ -82,8 +82,13 @@ const completeProfile = async (userId, user, { name, family }) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'name  or  family not found in request');
   }
 
+  if (!gender || !['M', 'W'].includes(gender)) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Gender Not Valid');
+  }
+
   currentUser.first_name = name;
   currentUser.last_name = family;
+  currentUser.gender = gender;
 
   const savedUser = await currentUser.save();
 
