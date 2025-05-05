@@ -36,6 +36,22 @@ const completeCouchInfo = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(coach);
 });
 
+
+// Coach Course Program
+const getCoachCourseProgramPublic = catchAsync(async (req, res) => {
+  if (!req.user) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Not authorized User not exist on the Request');
+  }
+
+  if (req.user?.role !== 'coach') {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Not authorized User Not COACH Role');
+  }
+
+  const coachCourseProgram = await coachService.getCoachCourseProgramPublic({user: req.user});
+  res.status(httpStatus.OK).send(coachCourseProgram);
+});
+
+
 // Admin
 // Get a specific coach by ID
 const getCoachByIdForAdmin = catchAsync(async (req, res) => {
@@ -47,6 +63,7 @@ module.exports = {
   getAllCoaches,
   createCoach,
   getCoachById,
+  getCoachCourseProgramPublic,
   getCoachByIdForAdmin,
   completeCouchInfo,
 };

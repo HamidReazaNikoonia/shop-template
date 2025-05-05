@@ -19,6 +19,10 @@ router.patch(
   coachController.completeCouchInfo
 );
 
+// Get Public Coach Course
+// USER ROUTES
+router.get('/coach-course-program', auth(), coachController.getCoachCourseProgramPublic);
+
 router.get('/profile/:coachId', auth(), coachController.getCoachById);
 
 router.post('/coach-course-program/:coachId/enroll', coachCourseProgramController.enrollInCourse);

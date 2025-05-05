@@ -4,6 +4,7 @@ const ApiError = require('../../utils/ApiError');
 
 // Models
 const UserModel = require('../../models/user.model');
+const CouchCourseProgram = require('../Admin/coach/coachCourseProgram/coach_course_program.model');
 
 // Get all coaches
 const getAllCoaches = async () => {
@@ -17,6 +18,51 @@ const getCoachById = async (id) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Coach not found');
   }
   return coach;
+};
+
+// get Coach Course Program
+// Get a specific coach by ID
+const getCoachCourseProgramPublic = async ({ user }) => {
+  const coach = await Coach.findById(user.id);
+  if (!coach) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Coach not found');
+  }
+
+  // check if coach information exist or not
+  if (!coach?.coach_Information) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Coach have not coach_information');
+  }
+
+  // get programs
+  // Default fields to select
+
+  const coachCoursePrograms = await await CouchCourseProgram.aggregate([
+    {
+      $match: { isPublished: true }
+    },
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        description: 1,
+        amount: 1,
+        is_have_penalty: 1,
+        penalty_fee: 1,
+        course_subject_count: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        course_object_titles: {
+          $map: {
+            input: "$course_object",
+            as: "course",
+            in: "$$course.title"
+          }
+        }
+      }
+    }
+  ]);
+
+  return coachCoursePrograms;
 };
 
 // create new coach
@@ -68,6 +114,7 @@ const getCoachByIdForAdmin = async (id) => {
 module.exports = {
   getAllCoaches,
   getCoachById,
+  getCoachCourseProgramPublic,
   getCoachByIdForAdmin,
   createCoach,
   completeCouchInfo,
