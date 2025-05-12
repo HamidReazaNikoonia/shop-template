@@ -8,7 +8,7 @@ const TransactionSchema = new mongoose.Schema(
   {
     customer: {
       type: mongoose.Types.ObjectId,
-      ref: 'Customer',
+      ref: 'User',
       autopopulate: true,
     },
     reference_id: {
@@ -19,6 +19,11 @@ const TransactionSchema = new mongoose.Schema(
     order_id: {
       type: mongoose.Types.ObjectId,
       ref: 'Order',
+      autopopulate: false,
+    },
+    courseProgram: {
+      type: mongoose.Types.ObjectId,
+      ref: 'CoachCourseProgram',
       autopopulate: false,
     },
     payment_reference_id: String,

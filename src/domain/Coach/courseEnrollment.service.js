@@ -55,6 +55,7 @@ class CourseEnrollmentService {
     };
 
     coach.enrolledCourses.push(enrolledCourse);
+    coach.access_level_request = coachCourseProgram.title;
     await coach.save();
 
     return coach;

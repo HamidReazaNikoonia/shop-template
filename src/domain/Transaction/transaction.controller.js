@@ -3,7 +3,7 @@ const httpStatus = require('http-status');
 const { omit } = require('lodash');
 const Transaction = require('./transaction.model');
 const Reference = require('../Reference/reference.model');
-const UserModel = require("../../models/user.model");
+const UserModel = require('../../models/user.model');
 const ApiError = require('../../utils/ApiError');
 const { verifyPay, pay } = require('../../services/payment');
 
@@ -15,6 +15,35 @@ const { verifyPay, pay } = require('../../services/payment');
 exports.getAll = async (req, res, next) => {
   try {
     const transactions = await Transaction.find();
+    if (!transactions) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'Transaction Not Found');
+    }
+
+    res.status(httpStatus.OK);
+    res.json({
+      data: transactions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getTransactionIdForUser = async (req, res, next) => {
+  try {
+    const { transaction_id } = req.params;
+    const { user } = req;
+    const Err = (message = 'INTERNAL ERROR', status = null) => new ApiError(status || httpStatus.BAD_REQUEST, message);
+
+    if (!user) {
+      throw Err('User Not Found');
+    }
+
+    if (!transaction_id) {
+      throw Err('Transaction Not Found');
+    }
+
+    const transactions = await Transaction.findOne({ _id: transaction_id, customer: user.id });
+
     if (!transactions) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Transaction Not Found');
     }

@@ -59,6 +59,11 @@ const coachCourseProgramSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    duration: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     amount: {
       type: Number,
       required: true,

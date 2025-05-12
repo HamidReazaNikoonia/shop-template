@@ -23,8 +23,16 @@ router.patch(
 // USER ROUTES
 router.get('/coach-course-program', auth(), coachController.getCoachCourseProgramPublic);
 
+/** ***** PAYMENT ROUTE   ******* */
+// checkout
+router.get('/coach-course-program/checkout/:coachCourseProgramId', auth(), coachController.checkoutCoachCourseProgram);
+
+// Verification Checkout Payment request
+router.get('/coach-course-program/validate-checkout/:coachCourseProgramId', coachController.checkoutVerification);
+
 router.get('/profile/:coachId', auth(), coachController.getCoachById);
 
+// Enroll course
 router.post('/coach-course-program/:coachId/enroll', coachCourseProgramController.enrollInCourse);
 router.post(
   '/coach-course-program/:coachId/:coachCourseProgramId/:subjectId/complete',
