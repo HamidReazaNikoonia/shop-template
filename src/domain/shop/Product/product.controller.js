@@ -4,7 +4,7 @@ const httpStatus = require('http-status');
 const catchAsync = require('../../../utils/catchAsync');
 const productService = require('./product.service');
 const ApiError = require('../../../utils/ApiError');
-
+const pick = require('../../../utils/pick');
 
 /** **************************  Admin ***************************************** */
 const getAllProductsForAdmin = catchAsync(async (req, res) => {
@@ -12,7 +12,10 @@ const getAllProductsForAdmin = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
   }
 
-  const result = await productService.getAllProductForAdmin({ query: req.query });
+  const filter = pick(req.query, ['title', 'subtitle', 'q', '_id']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  const result = await productService.getAllProductForAdmin({ filter, options });
   res.status(httpStatus.OK).send(result);
 });
 

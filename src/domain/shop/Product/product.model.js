@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { toJSON, paginate } = require('../../../models/plugins');
 
 const objectId = mongoose.Types.ObjectId;
 
@@ -8,7 +9,7 @@ const productTypesEnum = ['publish', 'draft', 'rejected'];
 // Review Schema
 const reviewSchema = mongoose.Schema(
   {
-    product: {type: objectId, ref: 'Product'},
+    product: { type: objectId, ref: 'Product' },
     name: { type: String, required: true },
     // Individual rating
     rating: {
@@ -42,11 +43,13 @@ const collectionSchema = mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    product: [{
-      type: objectId, // Gets id of Product
-      ref: 'Product', // Adds relationship between Review and User
-      autopopulate: true,
-    }],
+    product: [
+      {
+        type: objectId, // Gets id of Product
+        ref: 'Product', // Adds relationship between Review and User
+        autopopulate: true,
+      },
+    ],
   },
   {
     timestamps: true,
@@ -182,9 +185,12 @@ const productSchema = mongoose.Schema(
   }
 );
 
-
 // Create a text index for better search performance
 productSchema.index({ title: 'text', sub_title: 'text' });
+
+// add plugin that converts mongoose to json
+productSchema.plugin(toJSON);
+productSchema.plugin(paginate);
 
 productSchema.plugin(require('mongoose-autopopulate'));
 
@@ -197,7 +203,6 @@ const Collection = mongoose.model('Collection', collectionSchema);
 const Category = mongoose.model('Category', CategorySchema);
 const Product = mongoose.model('Product', productSchema);
 const ProductReview = mongoose.model('ProductReview', reviewSchema);
-
 
 module.exports = {
   Product,

@@ -57,23 +57,34 @@ const getAllProduct = async ({ query }) => {
   return { data: { total, count: products.length, products } };
 };
 
-const getAllProductForAdmin = async ({ query }) => {
-  const features = new APIFeatures(Product.find(), query)
-    .filter()
-    .search()
-    .priceRange() // Apply the price range filter
-    .sort()
-    .limitFields()
-    .paginate();
+const getAllProductForAdmin = async ({ filter, options }) => {
+  // const features = new APIFeatures(Product.find(), query)
+  //   .filter()
+  //   .search()
+  //   .priceRange() // Apply the price range filter
+  //   .sort()
+  //   .limitFields()
+  //   .paginate();
 
-  const products = await features.query;
-  const total = await new APIFeatures(Product.find(), query)
-    .filter()
-    .search()
-    .priceRange() // Apply the price range filter
-    .count().total;
+  // const products = await features.query;
+  // const total = await new APIFeatures(Product.find(), query)
+  //   .filter()
+  //   .search()
+  //   .priceRange() // Apply the price range filter
+  //   .count().total;
 
-  return { data: { total, count: products.length, products } };
+  const { q, ...otherFilters } = filter;
+
+  // If there's a search query, create a search condition
+  if (q) {
+    // eslint-disable-next-line security/detect-non-literal-regexp
+    const searchRegex = new RegExp(q, 'i'); // Case-insensitive search
+    otherFilters.$or = [{ title: searchRegex }, { subtitle: searchRegex }, { description: searchRegex }];
+  }
+
+  const products = await Product.paginate(otherFilters, options);
+
+  return { data: products };
 };
 
 const getProductBySlug = async ({ productId, user }) => {
@@ -89,7 +100,6 @@ const getProductBySlug = async ({ productId, user }) => {
 
   return { data: product };
 };
-
 
 const getProductReview = async ({ productId, page = 1, pageSize = 10 }) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
@@ -114,22 +124,19 @@ const getProductReview = async ({ productId, page = 1, pageSize = 10 }) => {
   return { data: productReview, totalReviews };
 };
 
-
-const createProductReview = async ({productId, name, text, rating = 1}) => {
+const createProductReview = async ({ productId, name, text, rating = 1 }) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Product ID');
   }
 
-  const newProductReviewModel = await ProductReview.create({ product: productId, name, comment: text, rating});
+  const newProductReviewModel = await ProductReview.create({ product: productId, name, comment: text, rating });
 
   if (!newProductReviewModel) {
     throw new ApiError(httpStatus.EXPECTATION_FAILED, 'Product Could Not Save In DB');
   }
 
-
-  return {data: newProductReviewModel }
-
-}
+  return { data: newProductReviewModel };
+};
 
 const getProductById = async ({ productId }) => {
   if (!mongoose.Types.ObjectId.isValid(productId)) {
@@ -171,7 +178,6 @@ const createProduct = async ({ product }) => {
     ...(product.qr_code && { qr_code: product.qr_code }),
     ...(product.average_rating && { average_rating: product.average_rating }),
     ...(product.is_available && { is_available: product.is_available }),
-
   };
   // if product is a giftcard, we should disallow discounts
   if (rest.is_giftcard) {
@@ -185,7 +191,7 @@ const createProduct = async ({ product }) => {
       throw new ApiError(httpStatus.NOT_FOUND, 'Selected Category Not Found!');
     }
 
-    productBody.category = rest.category
+    productBody.category = rest.category;
   }
 
   // Implement Image
@@ -218,8 +224,8 @@ const createProduct = async ({ product }) => {
   if (rest.discountable) {
     productBody.discountable = {
       status: true,
-       percent: rest.discountable.percent
-   }
+      percent: rest.discountable.percent,
+    };
     if (rest.discountable.status) {
       const currentPrice = Number(productBody.price);
       const discountPercentage = Number(rest.discountable.percent);
@@ -227,8 +233,6 @@ const createProduct = async ({ product }) => {
       productBody.price = FinalAmount;
     }
   }
-
-
 
   // JOBS
 
@@ -293,11 +297,21 @@ const updateProduct = async ({ productId, productData }) => {
       throw new ApiError(httpStatus.NOT_FOUND, 'Selected Category Not Found!');
     }
 
-    productBody.category = rest.category
+    productBody.category = rest.category;
   }
 
   if (rest.thumbnail && mongoose.Types.ObjectId.isValid(rest.thumbnail)) {
     productBody.thumbnail = rest.thumbnail;
+  }
+
+  productBody.$unset = {};
+
+  // remove thumbnail
+  if (rest.thumbnail === '') {
+    // eslint-disable-next-line dot-notation
+    productBody.$unset.thumbnail = '';
+    delete productBody.thumbnail;
+    // productBody['$unset'] = { thumbnail: '' };
   }
 
   if (Array.isArray(rest.images) && rest.images.length) {
@@ -311,15 +325,23 @@ const updateProduct = async ({ productId, productData }) => {
     productBody.images = validImagesArray;
   }
 
+  // remove images
+  if (rest.images === '') {
+    // eslint-disable-next-line dot-notation
+    // productBody['$unset'] = { images: '' };
+    productBody.$unset.images = '';
+    delete productBody.images;
+  }
+
   if (rest.countInStock === 0) {
     productBody.is_available = false;
   }
 
   if (rest.discountable && rest.discountable.status) {
-      productBody.discountable = {
-       status: true,
-        percent: rest.discountable.percent
-    }
+    productBody.discountable = {
+      status: true,
+      percent: rest.discountable.percent,
+    };
     const currentPrice = Number(productBody.price);
     const discountPercentage = Number(rest.discountable.percent);
     const FinalAmount = currentPrice * ((100 - discountPercentage) / 100);
@@ -327,8 +349,8 @@ const updateProduct = async ({ productId, productData }) => {
   } else {
     productBody.discountable = {
       status: false,
-      percent: 0
-    }
+      percent: 0,
+    };
   }
 
   const updatedProduct = await Product.findOneAndUpdate({ _id: productId }, productBody, { new: true });
@@ -349,5 +371,5 @@ module.exports = {
   createProduct,
   deleteProduct,
   updateProduct,
-  getProductById
+  getProductById,
 };
