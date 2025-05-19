@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { toJSON, paginate } = require('../../models/plugins');
 const Upload = require('../../services/uploader/uploader.model');
 const { Schema } = mongoose;
 
@@ -19,6 +20,7 @@ const courseSchema = new Schema({
     required: true,
   },
   sub_title: String,
+  description: String,
   tumbnail_image: {
     type: Schema.Types.ObjectId,
     required: true,
@@ -144,6 +146,11 @@ courseSchema.pre('save', async function (next) {
 
 
 courseSchema.plugin(require('mongoose-autopopulate'));
+
+
+// add plugin that converts mongoose to json
+courseSchema.plugin(toJSON);
+courseSchema.plugin(paginate);
 
 const Course = mongoose.model('Course', courseSchema);
 const CourseCategory = mongoose.model('Course_Category', CourseCategorySchema);

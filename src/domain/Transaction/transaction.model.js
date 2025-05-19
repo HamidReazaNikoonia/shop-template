@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { toJSON, paginate } = require('../../models/plugins');
 
 /**
  * Transaction Schema
@@ -44,8 +45,8 @@ const TransactionSchema = new mongoose.Schema(
       card_pan: String,
       fee_type: String,
       fee: Number,
-      shaparak_fee: Number
-    }
+      shaparak_fee: Number,
+    },
   },
   {
     timestamps: true,
@@ -53,5 +54,9 @@ const TransactionSchema = new mongoose.Schema(
 );
 
 TransactionSchema.plugin(require('mongoose-autopopulate'));
+
+// add plugin that converts mongoose to json
+TransactionSchema.plugin(toJSON);
+TransactionSchema.plugin(paginate);
 
 module.exports = mongoose.model('Transaction', TransactionSchema);

@@ -2,10 +2,26 @@ const httpStatus = require('http-status');
 const mongoose = require('mongoose');
 const catchAsync = require('../../utils/catchAsync');
 const ApiError = require('../../utils/ApiError');
+const pick = require('../../utils/pick');
 
 const courseService = require('./course.service');
 const { Course }  = require('./course.model');
 const Upload = require('../../services/uploader/uploader.model');
+
+
+// ADMIN
+const getAllCoursesForAdmin = catchAsync(async (req, res) => {
+
+  if (!req.user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+  }
+
+  const filter = pick(req.query, ['title', 'subtitle', 'q', '_id']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  const courses = await courseService.getAllCoursesForAdmin({ filter, options });
+  res.status(httpStatus.OK).send(courses);
+});
 
 const getAllCourses = catchAsync(async (req, res) => {
   const courses = await courseService.getAllCourses({query: req.query});
@@ -133,6 +149,9 @@ const createCourseCategory = catchAsync(async (req, res) => {
 
 
 module.exports = {
+  // admin
+  getAllCoursesForAdmin,
+
   getAllCourses,
   getCourseBySlugOrId,
   createCourse,

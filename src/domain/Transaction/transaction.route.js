@@ -11,6 +11,11 @@ const router = express.Router();
  * GET `api/reference` (ADMIN)
  * POST `api/reference`
  */
+
+// Get ALL Transaction For Admin
+
+router.route('/admin').get(transactionController.getAll);
+
 router
   .route('/')
   .post(validate(transactionValidation.getCustomerTransactions), transactionController.getCustomerTransactions);

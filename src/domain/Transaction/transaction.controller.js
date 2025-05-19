@@ -5,6 +5,7 @@ const Transaction = require('./transaction.model');
 const Reference = require('../Reference/reference.model');
 const UserModel = require('../../models/user.model');
 const ApiError = require('../../utils/ApiError');
+const pick = require('../../utils/pick');
 const { verifyPay, pay } = require('../../services/payment');
 
 /**
@@ -14,7 +15,24 @@ const { verifyPay, pay } = require('../../services/payment');
 
 exports.getAll = async (req, res, next) => {
   try {
-    const transactions = await Transaction.find();
+    // if (!req.user) {
+    //   throw new ApiError(httpStatus.NOT_FOUND, 'User Not Exist');
+    // }
+
+    const filter = pick(req.query, ['q', '_id']);
+    const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+    const { q, ...otherFilters } = filter;
+
+    // If there's a search query, create a search condition
+    if (q) {
+      // eslint-disable-next-line security/detect-non-literal-regexp
+      const searchRegex = new RegExp(q, 'i'); // Case-insensitive search
+      otherFilters.$or = [{ title: searchRegex }, { sub_title: searchRegex }, { description: searchRegex }];
+    }
+
+    const transactions = await Transaction.paginate(otherFilters, options);
+
     if (!transactions) {
       throw new ApiError(httpStatus.NOT_FOUND, 'Transaction Not Found');
     }
